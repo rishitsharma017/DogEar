@@ -192,7 +192,8 @@ function makeStar() {
   return btn;
 }
 
-// Small dark label above the ☆ on hover ("Bookmark"), like the site's own button tooltips.
+// Label next to the ☆ on hover ("Bookmark"), styled and placed like the site's own button
+// tooltips (adapter.tip).
 // One shared element, shown with a short delay so it doesn't flicker when passing over.
 let tip = null;
 let tipTimer = 0;
@@ -201,14 +202,23 @@ function showTip(btn) {
   clearTimeout(tipTimer);
   tipTimer = setTimeout(() => {
     if (!btn.isConnected || !btn.matches(':hover, :focus-visible') || btn.classList.contains('acb-open')) return;
-    if (!tip) tip = h('div', 'acb-ui acb-tip');
+    // The site's own tooltip look and position (adapter.tip), else ours: above, 8px gap.
+    const look = acb.adapter.tip || { side: 'above', gap: 8 };
+    if (!tip) {
+      tip = h('div', 'acb-ui acb-tip');
+      Object.assign(tip.style, look.style || {});
+    }
     tip.textContent = btn.getAttribute('aria-label');
     document.body.append(tip);
     const r = btn.getBoundingClientRect();
     const left = Math.min(Math.max(4, r.left + r.width / 2 - tip.offsetWidth / 2), innerWidth - tip.offsetWidth - 4);
-    const above = r.top - tip.offsetHeight - 8;
+    const above = r.top - tip.offsetHeight - look.gap;
+    const below = r.bottom + look.gap;
+    const fitsAbove = above >= 4;
+    const fitsBelow = below + tip.offsetHeight <= innerHeight - 4;
+    const top = look.side === 'below' ? (fitsBelow || !fitsAbove ? below : above) : (fitsAbove || !fitsBelow ? above : below);
     tip.style.left = `${Math.round(left)}px`;
-    tip.style.top = `${Math.round(above >= 4 ? above : r.bottom + 8)}px`;
+    tip.style.top = `${Math.round(top)}px`;
     tip.classList.add('acb-show');
   }, 250);
 }
@@ -258,7 +268,10 @@ function placeStar(btn, el) {
     if (turn && !turn.classList.contains('acb-turn')) turn.classList.add('acb-turn');
     matchSiteButton(btn, bar);
     // Before the button the site wants it in front of (starBefore), else after the last one.
-    const before = acb.adapter.starBefore && bar.querySelector(`:scope > ${acb.adapter.starBefore}`);
+    // That button may be wrapped in a few boxes (Gemini): go in front of the row's own
+    // child that holds it.
+    let before = acb.adapter.starBefore && bar.querySelector(acb.adapter.starBefore);
+    while (before && before.parentElement !== bar) before = before.parentElement;
     if (before) {
       if (before.previousElementSibling === btn) return;
       btn.classList.add('acb-inbar');
@@ -281,8 +294,10 @@ function placeStar(btn, el) {
 // Set once per star.
 function matchSiteButton(btn, bar) {
   if (!acb.adapter.starLike || btn.dataset.matched) return;
-  const like = bar.querySelector(`:scope > ${acb.adapter.starLike}`);
-  const icon = like && like.querySelector('svg');
+  const like = bar.querySelector(acb.adapter.starLike);
+  // The icon may be an SVG (ChatGPT) or an icon-font element (Gemini's <mat-icon>). Not just
+  // anything with "icon" in its class: that can be an invisible hover circle around it.
+  const icon = like && (like.querySelector('svg') || like.querySelector('mat-icon'));
   if (!like || !like.offsetWidth || !icon) return;
   const size = icon.getBoundingClientRect();
   btn.style.setProperty('--acb-star-box', `${like.offsetWidth}px`);
@@ -301,6 +316,7 @@ function scan() {
     return;
   }
   try {
+    let latest = null; // ☆ of the last finished answer
     for (const msg of getMessages(acb.adapter)) {
       if (msg.role !== 'ai') continue;
       if (isBusy(msg.el)) {
@@ -325,7 +341,14 @@ function scan() {
       btn.acbMsg = msg.el;
       placeStar(btn, msg.el);
       renderStar(btn, savedItemFor(msg.el));
+      latest = btn;
     }
+    // Sites show the buttons on the latest answer all the time (older ones on hover), so
+    // its ☆ always shows too.
+    for (const old of document.querySelectorAll('.acb-star.acb-latest')) {
+      if (old !== latest) old.classList.remove('acb-latest');
+    }
+    if (latest) latest.classList.add('acb-latest');
   } catch (e) {
     // Never break the page.
   }
@@ -484,7 +507,14 @@ async function openPicker(btn, el) {
   }
 
   renderList();
-  document.body.append(box);
+  // Inside the answer's box (not at the end of the page), so moving the mouse onto the picker
+  // still counts as hovering the answer and the site keeps its buttons showing. Clicks in it
+  // don't reach the site.
+  const host = btn.closest('.acb-turn') || btn.closest('.acb-host') || document.body;
+  for (const type of ['click', 'mousedown', 'pointerdown', 'mouseup']) {
+    box.addEventListener(type, e => e.stopPropagation());
+  }
+  host.append(box);
 
   // Below the star if there's room, otherwise above it.
   const r = btn.getBoundingClientRect();
@@ -493,6 +523,12 @@ async function openPicker(btn, el) {
   const left = Math.min(Math.max(8, r.left), innerWidth - box.offsetWidth - 8);
   box.style.top = `${top}px`;
   box.style.left = `${left}px`;
+  // Some site boxes shift "fixed" positions (e.g. when they use transforms): correct for it.
+  const placed = box.getBoundingClientRect();
+  if (Math.abs(placed.left - left) > 1 || Math.abs(placed.top - top) > 1) {
+    box.style.left = `${left + (left - placed.left)}px`;
+    box.style.top = `${top + (top - placed.top)}px`;
+  }
 
   picker = { box, btn };
   btn.classList.add('acb-open');
@@ -933,12 +969,15 @@ function linkTo(url) {
 // Wait until the chat has stopped changing (just switched or loaded): 400 ms without
 // page changes, at least one message on the page, and none of the old chat's messages
 // left (sites change the URL first and swap the messages in later). 8 s at most.
-async function waitForQuiet() {
+// item: stop waiting as soon as its answer is on the page (some sites keep redrawing a
+// freshly opened chat for seconds, long after the answer is already there).
+async function waitForQuiet(item) {
   const end = performance.now() + 8000;
   while (performance.now() < end) {
     await nextFrame();
     const messages = getMessages(acb.adapter);
     const oldLeft = acb.leaving && messages.some(m => acb.leaving.has(m.el));
+    if (messages.length && !oldLeft && item && findMessage(item)) break;
     if (performance.now() - acb.lastChange > 400 && messages.length && !oldLeft) break;
   }
   acb.leaving = null;
@@ -982,7 +1021,7 @@ async function checkPendingJump() {
   const item = items.find(it => it.id === pending.itemId);
   if (!item) return;
   const token = jumpToken;
-  await waitForQuiet();
+  await waitForQuiet(item);
   if (token === jumpToken) jumpTo(item); // skip if another jump or chat switch came first
 }
 
@@ -1145,15 +1184,18 @@ if (acb.adapter) {
   let scanTimer;
   new MutationObserver(records => {
     acb.lastChange = performance.now();
+    // Chat switches change the URL without reloading; the page changes right then too.
+    if (location.href !== acb.url) loadSaved();
     clearTimeout(scanTimer);
     if (barSel && records.some(touchesBar)) scan();
     else scanTimer = setTimeout(scan, 300);
   }).observe(document.body, { childList: true, subtree: true });
 
-  // Chat switches change the URL without reloading the page.
+  // Chat switches change the URL without reloading the page (also caught above when the
+  // page changes; this catches a switch that changes nothing else).
   setInterval(() => {
     if (location.href !== acb.url) loadSaved();
-  }, 1000);
+  }, 200);
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && (changes.items || changes.projects)) loadSaved();

@@ -33,10 +33,12 @@
 }
 
 /* Empty ☆ is hidden until you hover the answer (acb-turn = answer + its button row,
-   acb-host = the answer itself when there's no row). Saved ★ always shows, and so does a ☆
+   acb-host = the answer itself when there's no row), except on the latest answer
+   (acb-latest), whose buttons sites always show. A saved ★ always shows, and so does a ☆
    that copies a site button (acb-matched) on sites whose buttons are always there. */
 .acb-turn:hover .acb-star,
 .acb-host:hover > .acb-star,
+.acb-star.acb-latest,
 .acb-star.acb-matched,
 .acb-star:focus-visible,
 .acb-star.acb-open,

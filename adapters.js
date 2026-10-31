@@ -30,7 +30,16 @@ const ADAPTERS = [
       const turn = el.closest('[data-turn-key]');
       return turn ? turn.getAttribute('data-turn-key') : '';
     },
-    isBusy: el => el.closest('[data-is-streaming="true"]') !== null
+    isBusy: el => el.closest('[data-is-streaming="true"]') !== null,
+    // The ☆ tooltip looks like the site's own (measured from its "Retry" tooltip).
+    tip: {
+      side: 'above', gap: 5,
+      style: {
+        background: 'var(--cds-tooltip-bg, rgb(48, 48, 48))', color: 'rgba(255, 255, 255, 0.93)',
+        font: '400 13px/18px anthropic-sans, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+        padding: '3px 8px', borderRadius: '6px', border: 'none', boxShadow: 'none'
+      }
+    }
   },
   {
     name: 'ChatGPT',
@@ -77,6 +86,50 @@ const ADAPTERS = [
     isBusy: el => {
       const turn = el.closest('[data-talvt-turn-state]');
       return turn !== null && turn.getAttribute('data-talvt-turn-state') !== 'complete';
+    },
+    tip: {
+      side: 'below', gap: 6,
+      style: {
+        background: 'rgb(48, 48, 48)', color: 'rgb(237, 237, 237)',
+        font: '600 14px/18px ui-sans-serif, -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif',
+        letterSpacing: '-0.15px', padding: '5px 12px', borderRadius: '16px',
+        border: '0.5px solid rgba(255, 255, 255, 0.05)', boxShadow: '0 8px 18px rgba(15, 23, 42, 0.2)'
+      }
+    }
+  },
+  {
+    name: 'Gemini',
+    hosts: ['gemini.google.com'],
+    // /app/<id>, also inside a Gem (/gem/<gem>/<id>)
+    convPattern: /\/(?:app|gem\/[^/]+)\/([0-9a-f]{12,})/i,
+    userSelectors: ['user-query'],
+    aiSelectors: ['model-response'],
+    // The row under an answer: thumbs up/down, Redo, Copy, More (…).
+    actionsSelectors: ['message-actions .buttons-container-v2', 'message-actions'],
+    // ☆ goes just before "…" (More), and copies the look of the thumbs-up button.
+    starBefore: '[data-test-id="more-menu-button"]',
+    starLike: 'thumb-up-button button',
+    textSelectors: ['message-content .markdown', 'message-content'],
+    // "You said" / "Gemini said" for screen readers, and the screen-reader copy of maths
+    // (KaTeX draws every formula twice).
+    skipSelectors: ['.cdk-visually-hidden', '.katex-mathml'],
+    titleSuffix: /\s+[-–|]\s+Google Gemini$/,
+    // Gemini's own response id ("r_…"), in the answer text's element id.
+    msgId: el => {
+      const content = el.querySelector('message-content[id^="message-content-id-"]');
+      if (content) return content.id.slice('message-content-id-'.length);
+      const turn = el.closest('.conversation-container[id]');
+      return turn ? turn.id : '';
+    },
+    isBusy: el => el.querySelector('[aria-busy="true"]') !== null,
+    highlightSelectors: ['.user-query-bubble-with-background'],
+    tip: {
+      side: 'below', gap: 8,
+      style: {
+        background: 'rgb(230, 230, 230)', color: 'rgb(23, 23, 23)',
+        font: '400 13px/17px "Google Sans Flex", "Google Sans", "Helvetica Neue", sans-serif',
+        padding: '8px 16px', borderRadius: '12px', border: 'none', boxShadow: 'none'
+      }
     }
   }
 ];
@@ -185,5 +238,12 @@ function getQuestionEl(adapter, aiEl) {
 // The text of the user message just before this AI answer.
 function getQuestion(adapter, aiEl) {
   const q = getQuestionEl(adapter, aiEl);
-  return q ? q.innerText.trim() : '';
+  if (!q) return '';
+  let text = q.innerText;
+  // Leave out hidden screen-reader labels ("You said") the site puts inside the question.
+  for (const hidden of queryIn(q, (adapter && adapter.skipSelectors) || [])) {
+    const label = hidden.innerText.trim();
+    if (label) text = text.replace(label, '');
+  }
+  return text.trim();
 }

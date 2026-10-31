@@ -62,12 +62,13 @@ background.js loads common.js with `importScripts`. library.html loads it with a
 - All writes go through common.js, one at a time (a write queue), so quick saves don't overwrite each other
 
 ## Adapter rules
-- Each site: { name, hosts, convPattern, userSelectors[], aiSelectors[], actionsSelectors[]?, textSelectors[]?, skipSelectors[]?, titleSuffix?, msgId?, isBusy?, starBefore?, starLike?, highlightSelectors[]? }
+- Each site: { name, hosts, convPattern, userSelectors[], aiSelectors[], actionsSelectors[]?, textSelectors[]?, skipSelectors[]?, titleSuffix?, msgId?, isBusy?, starBefore?, starLike?, highlightSelectors[]?, tip? }
   (isBusy(el) = answer is still being written, so no ☆ yet)
   (actionsSelectors = the site's own button row under an answer; ☆ goes there, and its text is never part of the answer)
   (starBefore = the button in that row the ☆ goes in front of; starLike = the button whose size
    and colour the ☆ copies, so it looks built-in. Both optional: default is after the last button)
   (highlightSelectors = the part of a message the jump lights up, e.g. the question's bubble; default: all of it)
+  (tip = { side: 'above' | 'below', gap, style }: the ☆ tooltip copies the site's own tooltips, measured from them)
 - Several backup selectors per site, tried in order
 - Prefer stable attributes (data-testid, data-message-author-role, aria-*), never generated class names
 - If a site finds 0 messages, fail quietly, never break the page
@@ -112,12 +113,22 @@ Build order. One step at a time; Claude is the first site.
 - [x] 8. Library page: projects (rename, delete + undo), search, AI filter, move, copy, delete, export .md
 - [x] 9. Right-click save on any site
 - [x] 10. ChatGPT adapter
-- [ ] 11. Gemini adapter
+- [x] 11. Gemini adapter
 - [ ] 12. Perplexity adapter
 - [ ] 13. Grok adapter (grok.com; added by the user)
 - [ ] 14. UI polish: ☆ next to each site's own buttons (copy/retry) so it looks built-in; tidy picker, panel,
-      library; more visual work (the user wants it to look much better)
-- [ ] 15. Final check on every site, fix what fails (no new features)
+      library; more visual work (the user wants it to look much better). Library list (user's picks):
+      - show saved Markdown formatted (bold, lists, code boxes, dividers), built with DOM calls, no innerHTML
+      - Move dropdown labelled "Move to…" (now it just shows the project name)
+      - "+ New project" button in the sidebar
+      - sort (newest / oldest / by AI) and group a project's items by chat
+      - highlight search matches in the results
+      - relative dates ("2 h ago", full date on hover), "/" focuses search, long questions cut to 2 lines
+        (click for all), Copy as plain text or Markdown
+- [ ] 15. Final check on every site, fix what fails (no new features). Not yet confirmed by the user:
+      ☆ tooltip matches each site's own; Gemini saved text (no "You said", readable maths); Gemini bubble
+      glow after a jump; ☆ only after a new answer finishes (Gemini); ChatGPT "Email" card text when saved;
+      the spinner ring turning; tooltips/colours in light mode (measured in dark mode only)
 
 ## Later ideas (v2, only after step 15)
 In order. Not part of v1, don't build early.
