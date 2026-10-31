@@ -6,8 +6,42 @@
   <link rel="stylesheet" href="library.css">
 </head>
 <body>
-  <h1>Library</h1>
-  <p class="empty">Nothing here yet.</p>
+  <aside class="sidebar">
+    <div class="brand">★ AI Chat Bookmarks</div>
+    <nav id="projects"></nav>
+  </aside>
+
+  <main>
+    <header class="head">
+      <div class="title-row">
+        <h1 id="title"></h1>
+        <span id="count" class="count"></span>
+      </div>
+      <div id="project-actions" class="actions" hidden>
+        <button id="rename">Rename</button>
+        <button id="export">Export .md</button>
+        <button id="delete" class="danger">Delete</button>
+      </div>
+      <div id="trash-actions" class="actions" hidden>
+        <button id="empty-trash" class="danger">Delete all forever</button>
+      </div>
+    </header>
+
+    <p id="trash-note" class="note" hidden>Deleted projects and answers are kept here for 30 days.</p>
+
+    <div id="toolbar" class="toolbar">
+      <input id="search" type="search" placeholder="Search saved answers…" autocomplete="off">
+      <select id="ai-filter"></select>
+    </div>
+
+    <div id="list"></div>
+  </main>
+
+  <div id="undo" class="undo" hidden>
+    <span id="undo-text"></span>
+    <button id="undo-btn">Undo</button>
+  </div>
+
   <script src="common.js"></script>
   <script src="library.js"></script>
 </body>

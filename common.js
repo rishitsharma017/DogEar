@@ -30,7 +30,7 @@ function uid() {
 // ---------- Reading ----------
 
 async function getData() {
-  return chrome.storage.local.get({ projects: [], items: [], lastProjectId: null });
+  return chrome.storage.local.get({ projects: [], items: [], lastProjectId: null, trash: [] });
 }
 
 async function itemsForConv(convId) {
@@ -96,7 +96,22 @@ function renameProject(projectId, name) {
   });
 }
 
-// Deletes the project and its items. Returns what was removed so it can be undone.
+// ---------- Recently deleted ----------
+// Deleted projects and items go to `trash` first, so they can be restored.
+// trash: [{ id, kind: 'project' | 'item', deletedAt, project, items }]
+// (for an item, project = the project it was in, so it can go back there)
+
+const TRASH_DAYS = 30;
+
+function addToTrash(data, kind, project, items) {
+  const cutoff = Date.now() - TRASH_DAYS * 24 * 60 * 60 * 1000;
+  data.trash = data.trash.filter(t => t.deletedAt > cutoff);
+  const entry = { id: uid(), kind, deletedAt: Date.now(), project: project || null, items };
+  data.trash.push(entry);
+  return entry;
+}
+
+// Deletes the project and its items (into trash). Returns the trash entry.
 function deleteProject(projectId) {
   return update(data => {
     const project = data.projects.find(p => p.id === projectId);
@@ -105,16 +120,34 @@ function deleteProject(projectId) {
     data.projects = data.projects.filter(p => p.id !== projectId);
     data.items = data.items.filter(it => it.projectId !== projectId);
     if (data.lastProjectId === projectId) data.lastProjectId = null;
-    return { project, items };
+    return addToTrash(data, 'project', project, items);
   });
 }
 
-// Undo for deleteProject: put the project and its items back.
-function restoreProject(removed) {
+// Puts a trash entry back. If its project was deleted meanwhile, the project comes back too.
+function restoreFromTrash(entryId) {
   return update(data => {
-    if (!removed || data.projects.some(p => p.id === removed.project.id)) return;
-    data.projects.push(removed.project);
-    data.items.push(...removed.items);
+    const entry = data.trash.find(t => t.id === entryId);
+    if (!entry) return null;
+    data.trash = data.trash.filter(t => t.id !== entryId);
+    if (entry.project && !data.projects.some(p => p.id === entry.project.id)) {
+      data.projects.push(entry.project);
+    }
+    const have = new Set(data.items.map(it => it.id));
+    data.items.push(...entry.items.filter(it => !have.has(it.id)));
+    return entry;
+  });
+}
+
+function deleteFromTrash(entryId) {
+  return update(data => {
+    data.trash = data.trash.filter(t => t.id !== entryId);
+  });
+}
+
+function emptyTrash() {
+  return update(data => {
+    data.trash = [];
   });
 }
 
@@ -164,12 +197,14 @@ function setItemPos(itemId, pos) {
   });
 }
 
-// Returns the removed item (or null).
+// Moves the item to trash. Returns the trash entry (or null).
 function deleteItem(itemId) {
   return update(data => {
     const item = data.items.find(it => it.id === itemId);
+    if (!item) return null;
     data.items = data.items.filter(it => it.id !== itemId);
-    return item || null;
+    const project = data.projects.find(p => p.id === item.projectId);
+    return addToTrash(data, 'item', project, [item]);
   });
 }
 

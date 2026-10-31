@@ -20,6 +20,8 @@ Two use cases. Every decision should serve these:
    - Copy = copy the answer text to the clipboard
    - Projects can be renamed and deleted. Delete asks to confirm (shows how many items),
      removes the project and its items, then shows an "Undo" bar for 8 s
+   - "Recently deleted" (asked for by the user): deleted projects and items (also ★ → remove)
+     go to trash for 30 days; Restore or Delete forever
 5. Right-click selected text on any site → save to last-used project (or "Inbox"), ✓ badge on the icon for 2 s
 
 ## File structure (keep it exactly like this)
@@ -40,6 +42,8 @@ background.js loads common.js with `importScripts`. library.html loads it with a
 - items: [{ id, projectId, ai, text, question, chatTitle, url, convId, msgId, pos, hash, prefix, createdAt }]
   (pos = where the answer sat in the chat when saved, 0 = top … 1 = bottom; a hint so the jump starts near it)
 - lastProjectId
+- trash: [{ id, kind: 'project' | 'item', deletedAt, project, items }] (kept 30 days;
+  for an item, project = the project it was in, so Restore can bring that back too)
 - pendingJump: { itemId, url, time, panelView } (temporary, see "Must handle"; panelView = reopen the panel like this)
 - panelPos: { left, top } where the user dragged the Alt+B panel (null = default top-right)
 - Store the actual answer text, not just a link, so saved items survive chat deletion
@@ -94,7 +98,7 @@ Build order. One step at a time; Claude is the first site.
 - [x] 5. Save picker (with markdown conversion) + ★ menu to move/remove
 - [x] 6. Panel (Alt+B): this chat's items, browse a project
 - [x] 7. Jump to message: same chat, long chats (scroll up + retry), other chats (pendingJump)
-- [ ] 8. Library page: projects (rename, delete + undo), search, AI filter, move, copy, delete, export .md
+- [x] 8. Library page: projects (rename, delete + undo), search, AI filter, move, copy, delete, export .md
 - [ ] 9. Right-click save on any site
 - [ ] 10. ChatGPT adapter
 - [ ] 11. Gemini adapter
