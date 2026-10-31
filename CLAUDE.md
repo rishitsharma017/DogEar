@@ -109,3 +109,13 @@ Build order. One step at a time; Claude is the first site.
 - [ ] 12. Perplexity adapter
 - [ ] 13. UI polish: ☆ next to each site's own buttons (copy/retry) so it looks built-in; tidy picker, panel, library
 - [ ] 14. Final check on every site, fix what fails (no new features)
+
+## Later ideas (v2, only after step 14)
+In order. Not part of v1, don't build early.
+1. Backup / restore: download all data as one file, load it back (data only lives in Chrome)
+2. "Copy project as prompt": a project as one message to paste into any AI to continue the research
+3. Notes on a bookmark: short label shown in the panel instead of the first line
+4. Scrollbar markers: gold ticks on the chat's scrollbar where starred answers are; click to jump
+5. Alt+↑ / Alt+↓: previous / next starred answer in this chat
+Maybe: save part of an answer (jump to that paragraph), compare AIs side by side,
+PDF / Notion / Google Docs export, tags. Skip: sync between computers, AI summaries (need servers / API keys).
