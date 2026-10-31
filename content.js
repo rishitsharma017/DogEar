@@ -653,11 +653,14 @@ async function settle(item, token, ms) {
 // most `limit` px. Starts at 2500 px/s, speeds up to 5000 px/s (faster can fly past
 // messages the site hasn't put in the page yet). Returns the answer, or null when the
 // limit is reached, it's stuck at the end, or time is up.
+//
+// Distance counts only our own scrolling: when the site loads older messages at the top,
+// scrollTop jumps by thousands of px without us moving past anything.
 async function sweep(box, item, token, direction, limit, deadline) {
-  const start = box.scrollTop;
   let speed = 2500;
-  let best = direction * box.scrollTop; // furthest point reached
-  let bestAt = performance.now();
+  let moved = 0;
+  let progress = 0; // `moved` at the last check that we're not stuck
+  let progressAt = performance.now();
   let triedEnd = false;
   let last = performance.now();
 
@@ -670,18 +673,19 @@ async function sweep(box, item, token, direction, limit, deadline) {
 
     const el = findMessage(item);
     if (el) return el;
-    if (Math.abs(box.scrollTop - start) >= limit) return null;
+    if (moved >= limit) return null;
 
     const before = box.scrollTop;
     box.scrollTop += direction * speed * dt;
+    moved += Math.abs(box.scrollTop - before);
     speed = Math.min(speed * (1 + dt), 5000);
     // The site pulled us back to the bottom: tell it again to let go.
     if (direction < 0 && box.scrollTop > before + 200) releaseStickToBottom(box);
 
-    if (direction * box.scrollTop > best + 50) {
-      best = direction * box.scrollTop;
-      bestAt = now;
-    } else if (now - bestAt > 1000) {
+    if (moved > progress + 50) {
+      progress = moved;
+      progressAt = now;
+    } else if (now - progressAt > 1000) {
       const atEnd = direction < 0
         ? box.scrollTop <= 0
         : box.scrollTop >= box.scrollHeight - box.clientHeight - 1;
@@ -689,7 +693,7 @@ async function sweep(box, item, token, direction, limit, deadline) {
       // Stuck: jump straight to the end and look there for another second.
       box.scrollTop = direction < 0 ? 0 : box.scrollHeight;
       triedEnd = true;
-      bestAt = now;
+      progressAt = now;
     }
   }
   return null;
