@@ -59,6 +59,17 @@ function flashBadge(text, color, tab) {
   setTimeout(() => chrome.action.setBadgeText({ text: '', tabId }), 2000);
 }
 
+// ---------- Open a bookmark from another site ----------
+
+// The panel on one AI site asked to open a bookmark from another (pages can't open tabs
+// themselves reliably). Opens next to the tab it came from.
+chrome.runtime.onMessage.addListener((msg, sender) => {
+  if (msg && msg.type === 'open-tab' && typeof msg.url === 'string' && /^https?:/.test(msg.url)) {
+    const from = sender.tab;
+    chrome.tabs.create({ url: msg.url, index: from ? from.index + 1 : undefined, openerTabId: from ? from.id : undefined });
+  }
+});
+
 // ---------- Alt+B ----------
 
 // Alt+B → tell the current tab to show/hide the panel. Tabs without our content

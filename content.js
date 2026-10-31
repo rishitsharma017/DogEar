@@ -182,9 +182,43 @@ function makeStar() {
   btn.addEventListener('click', e => {
     e.preventDefault();
     e.stopPropagation();
+    hideTip();
     openPicker(btn, btn.acbMsg);
   });
+  btn.addEventListener('mouseenter', () => showTip(btn));
+  btn.addEventListener('focus', () => showTip(btn));
+  btn.addEventListener('mouseleave', hideTip);
+  btn.addEventListener('blur', hideTip);
   return btn;
+}
+
+// Small dark label above the ☆ on hover ("Bookmark"), like the site's own button tooltips.
+// One shared element, shown with a short delay so it doesn't flicker when passing over.
+let tip = null;
+let tipTimer = 0;
+
+function showTip(btn) {
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(() => {
+    if (!btn.isConnected || !btn.matches(':hover, :focus-visible') || btn.classList.contains('acb-open')) return;
+    if (!tip) tip = h('div', 'acb-ui acb-tip');
+    tip.textContent = btn.getAttribute('aria-label');
+    document.body.append(tip);
+    const r = btn.getBoundingClientRect();
+    const left = Math.min(Math.max(4, r.left + r.width / 2 - tip.offsetWidth / 2), innerWidth - tip.offsetWidth - 4);
+    const above = r.top - tip.offsetHeight - 8;
+    tip.style.left = `${Math.round(left)}px`;
+    tip.style.top = `${Math.round(above >= 4 ? above : r.bottom + 8)}px`;
+    tip.classList.add('acb-show');
+  }, 250);
+}
+
+function hideTip() {
+  clearTimeout(tipTimer);
+  if (tip) {
+    tip.classList.remove('acb-show');
+    tip.remove();
+  }
 }
 
 // Star outline as an SVG (built with DOM calls, no innerHTML). Filled via CSS when saved.
@@ -206,8 +240,9 @@ function renderStar(btn, item) {
   if (btn.dataset.state === state) return;
   btn.dataset.state = state;
   if (!btn.firstChild) btn.append(starIcon());
-  btn.title = item ? 'Saved – click to move or remove' : 'Save to a project';
-  btn.setAttribute('aria-label', btn.title);
+  // No title: that would show the browser's own tooltip on top of ours.
+  btn.removeAttribute('title');
+  btn.setAttribute('aria-label', item ? 'Edit bookmark' : 'Bookmark');
   btn.classList.toggle('acb-saved', !!item);
 }
 
@@ -221,6 +256,15 @@ function placeStar(btn, el) {
     let turn = bar;
     while (turn && !turn.contains(el)) turn = turn.parentElement;
     if (turn && !turn.classList.contains('acb-turn')) turn.classList.add('acb-turn');
+    matchSiteButton(btn, bar);
+    // Before the button the site wants it in front of (starBefore), else after the last one.
+    const before = acb.adapter.starBefore && bar.querySelector(`:scope > ${acb.adapter.starBefore}`);
+    if (before) {
+      if (before.previousElementSibling === btn) return;
+      btn.classList.add('acb-inbar');
+      before.before(btn);
+      return;
+    }
     const buttons = bar.querySelectorAll(':scope > button:not(.acb-ui)');
     const after = buttons[buttons.length - 1];
     if (after ? after.nextElementSibling === btn : btn.parentElement === bar) return;
@@ -230,6 +274,23 @@ function placeStar(btn, el) {
     btn.classList.remove('acb-inbar');
     el.appendChild(btn);
   }
+}
+
+// Sites whose adapter names a starLike button: make the ☆ the same size and colour as it,
+// and always visible like it (acb-matched), so it looks like one of the site's own buttons.
+// Set once per star.
+function matchSiteButton(btn, bar) {
+  if (!acb.adapter.starLike || btn.dataset.matched) return;
+  const like = bar.querySelector(`:scope > ${acb.adapter.starLike}`);
+  const icon = like && like.querySelector('svg');
+  if (!like || !like.offsetWidth || !icon) return;
+  const size = icon.getBoundingClientRect();
+  btn.style.setProperty('--acb-star-box', `${like.offsetWidth}px`);
+  btn.style.setProperty('--acb-star-icon', `${Math.round(size.width)}px`);
+  btn.style.setProperty('--acb-star-color', getComputedStyle(like).color);
+  btn.style.setProperty('--acb-star-radius', getComputedStyle(like).borderRadius);
+  btn.dataset.matched = '1';
+  btn.classList.add('acb-matched');
 }
 
 const stars = new WeakMap(); // answer element → its ☆ button (it may live outside the answer)
@@ -319,7 +380,8 @@ async function saveMessage(el, projectId) {
     url: location.href,
     convId: acb.convId,
     msgId: msgIdOf(el),
-    pos: positionOf(el)
+    pos: positionOf(el),
+    fromEnd: fromEndOf(el)
   });
 }
 
@@ -327,9 +389,21 @@ async function saveMessage(el, projectId) {
 function positionOf(el) {
   const box = scrollBoxOf(el);
   if (!box.scrollHeight) return null;
+  return Math.min(1, Math.max(0, offsetIn(el, box) / box.scrollHeight));
+}
+
+// How far the answer sits above the end of the chat, in px. Unlike pos, this stays right
+// while the site loads older messages at the top (the newest part never moves).
+function fromEndOf(el) {
+  const box = scrollBoxOf(el);
+  if (!box.scrollHeight) return null;
+  return Math.max(0, Math.round(box.scrollHeight - offsetIn(el, box)));
+}
+
+// el's distance from the top of the scrolling chat, in px.
+function offsetIn(el, box) {
   const boxTop = box === document.scrollingElement ? 0 : box.getBoundingClientRect().top;
-  const offset = box.scrollTop + el.getBoundingClientRect().top - boxTop;
-  return Math.min(1, Math.max(0, offset / box.scrollHeight));
+  return box.scrollTop + el.getBoundingClientRect().top - boxTop;
 }
 
 // ☆ → pick a project to save into. ★ → move to another project, or remove.
@@ -340,7 +414,9 @@ async function openPicker(btn, el) {
   const item = savedItemFor(el);
   const { projects, lastProjectId } = await getData();
   const current = item && projects.find(p => p.id === item.projectId);
+  // Inbox is for web clips (right-click saves), so it isn't offered for AI answers.
   const choices = projects
+    .filter(p => !isInbox(p))
     .filter(p => !item || p.id !== item.projectId)
     .sort((a, b) => (b.id === lastProjectId) - (a.id === lastProjectId) || a.name.localeCompare(b.name));
 
@@ -381,7 +457,7 @@ async function openPicker(btn, el) {
     }
     if (!list.childElementCount) {
       list.append(h('div', 'acb-picker-label',
-        projects.length ? 'No other projects yet' : 'Type a name and press Enter'));
+        choices.length || item ? 'No other projects yet' : 'Type a name and press Enter'));
     }
   };
 
@@ -449,6 +525,27 @@ function scrollBoxOf(el) {
   return document.scrollingElement;
 }
 
+// The part of a message to light up after a jump: the adapter's highlightSelectors (e.g. the
+// speech bubble, so it isn't the full width of the chat), else the bubble around the
+// message, else the whole message.
+function highlightPart(el) {
+  const sels = acb.adapter.highlightSelectors;
+  return (sels && queryIn(el, sels)[0]) || bubbleAround(el) || el;
+}
+
+// The speech bubble a question sits in: the message itself or one of its first few parents
+// that has a background colour and rounded corners. Never so high that it holds an answer.
+function bubbleAround(el) {
+  let n = el;
+  for (let level = 0; n && n !== document.body && level < 4; level++, n = n.parentElement) {
+    if (level > 0 && queryIn(n, acb.adapter.aiSelectors).length) break;
+    const style = getComputedStyle(n);
+    const filled = style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.backgroundColor !== 'transparent';
+    if (filled && parseFloat(style.borderTopLeftRadius) > 0) return n;
+  }
+  return null;
+}
+
 function flash(el) {
   el.classList.remove('acb-flash');
   void el.offsetWidth; // restart the animation if it's already running
@@ -478,23 +575,20 @@ async function jumpTo(item, firstTry = true) {
   const token = ++jumpToken;
   let answer = findMessage(item);
   if (!answer) {
-    const note = toast('Finding message…', 0);
+    const cover = showSearchCover(token);
     try {
       answer = await searchFor(item, token);
     } finally {
-      note.remove();
+      cover.remove();
     }
     if (token !== jumpToken) return;
     if (!answer) {
       toast('Couldn’t find this message');
       return;
     }
-    if (typeof item.pos !== 'number') {
-      item.pos = positionOf(answer);
-      if (item.pos !== null) setItemPos(item.id, item.pos);
-    }
   }
   if (!await land(item, token)) return;
+  learnHints(item);
   if (firstTry) {
     const watch = watchUser();
     await new Promise(r => setTimeout(r, 300));
@@ -504,6 +598,20 @@ async function jumpTo(item, firstTry = true) {
   }
 }
 
+// After a jump, store where the answer really is now, so the next jump goes straight there.
+// Fixes items saved before the hints existed, and chats that grew after saving (new
+// messages below push the answer further from the end).
+function learnHints(item) {
+  const answer = findMessage(item);
+  if (!answer) return;
+  const fromEnd = fromEndOf(answer);
+  if (fromEnd === null) return;
+  if (typeof item.fromEnd === 'number' && Math.abs(item.fromEnd - fromEnd) < 300) return;
+  item.pos = positionOf(answer);
+  item.fromEnd = fromEnd;
+  setItemHints(item.id, item.pos, item.fromEnd);
+}
+
 // Is the message (its question, if on the page) where land() put it?
 function landedOn(item) {
   const answer = findMessage(item);
@@ -511,6 +619,51 @@ function landedOn(item) {
   const el = getQuestionEl(acb.adapter, answer) || answer;
   const box = scrollBoxOf(el);
   return Math.abs(scrollTopFor(el, box) - box.scrollTop) < 100;
+}
+
+// While searching, the chat jumps around (the site loads older messages and shifts the
+// page). A dim cover over the chat hides that. Cancel, Esc or the mouse wheel stop the search.
+function showSearchCover(token) {
+  const first = getMessages(acb.adapter)[0];
+  const box = first ? scrollBoxOf(first.el) : null;
+  const cover = h('div', 'acb-ui acb-cover');
+  if (box && box !== document.scrollingElement) {
+    const r = box.getBoundingClientRect();
+    Object.assign(cover.style, {
+      left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px'
+    });
+  }
+  const cancel = h('button', 'acb-cover-cancel', 'Cancel');
+  cancel.type = 'button';
+  // Gold ring sweeping around a softly pulsing ★.
+  const spinner = h('span', 'acb-spinner');
+  spinner.append(h('span', 'acb-spinner-ring'), starIcon());
+  const text = h('span', 'acb-cover-text');
+  text.append(h('span', 'acb-cover-title', 'Finding message'),
+    h('span', 'acb-cover-hint', 'Searching the chat · Esc to cancel'));
+  const card = h('div', 'acb-cover-card');
+  card.append(spinner, text, cancel);
+  cover.append(card);
+  document.body.append(cover);
+  requestAnimationFrame(() => cover.classList.add('acb-show'));
+
+  let gone = false;
+  const remove = () => {
+    if (gone) return;
+    gone = true;
+    document.removeEventListener('keydown', onKey, true);
+    cover.classList.remove('acb-show');
+    setTimeout(() => cover.remove(), 200);
+  };
+  const stop = () => {
+    if (jumpToken === token) jumpToken++; // cancels the search
+    remove();
+  };
+  const onKey = e => { if (e.key === 'Escape') stop(); };
+  cancel.addEventListener('click', stop);
+  cover.addEventListener('wheel', stop, { passive: true });
+  document.addEventListener('keydown', onKey, true);
+  return { remove };
 }
 
 // Tracks whether the user scrolls, clicks or types (our own pretend wheel doesn't count).
@@ -566,7 +719,7 @@ async function land(item, token) {
 
       const el = getQuestionEl(acb.adapter, answer) || answer;
       if (el !== flashed) {
-        flash(el);
+        flash(highlightPart(el));
         flashed = el;
       }
       const box = scrollBoxOf(el);
@@ -595,36 +748,54 @@ function releaseStickToBottom(box) {
   box.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true, cancelable: true }));
 }
 
-// Find the answer by scrolling. Returns the answer element, or null after ~15 s.
+// Find the answer by scrolling. Returns the answer element, or null after ~15 s (longer
+// while a long chat is still loading older messages).
 //
-// 1. Saved with a position hint (pos) → jump straight there and look.
-// 2. Not there → sweep: a little up from the hint, then down to the bottom, then up to the
-//    top. Without a hint: up to the top, then down.
+// 1. Saved with fromEnd (px from the end of the chat) → go straight there, loading older
+//    messages first if needed (seekFromEnd). Not exactly there → look around it, then sweep.
+// 2. Only pos (older saves) → jump there and look, then: one screen down, up to the top,
+//    down to the bottom. pos is unreliable on sites that load older messages at the top
+//    (it was measured against however much of the chat had loaded), so up comes first:
+//    unloaded messages are always above.
+// 3. No hint → up to the top, then down.
 //
 // While searching, the browser's scroll anchoring is switched off on the chat: when the
 // site fills in taller messages above the screen, anchoring pushes the page back down and
 // cancels out our scrolling.
 async function searchFor(item, token) {
-  const deadline = Date.now() + 15000;
+  let deadline = Date.now() + 15000;
   let box = null;
+  const boxWait = Date.now() + 3000;
   while (!box) { // wait for the chat to load
     await nextFrame();
     if (token !== jumpToken || Date.now() > deadline) return null;
     const el = findMessage(item);
     if (el) return el;
     const messages = getMessages(acb.adapter);
-    if (messages.length) box = scrollBoxOf(messages[0].el);
+    if (!messages.length) continue;
+    // Right after a chat opens, its scrolling box may not be set up yet, so the whole page
+    // looks like the scroller (and can't scroll). Give the real one a moment to appear.
+    const found = scrollBoxOf(messages[0].el);
+    if (found !== document.scrollingElement || Date.now() > boxWait) box = found;
   }
 
   box.style.overflowAnchor = 'none';
   try {
     releaseStickToBottom(box);
     let phases = [[-1, Infinity], [1, Infinity]];
-    if (typeof item.pos === 'number') {
+    if (typeof item.fromEnd === 'number') {
+      const el = await seekFromEnd(box, item, token);
+      if (el) return el;
+      if (token !== jumpToken) return null;
+      deadline = Math.max(deadline, Date.now() + 5000); // loading may have used up the 15 s
+      // Not exactly there: sites guess the height of messages off screen, and new messages
+      // added after saving push the answer further up. Check just below, then go up.
+      phases = [[1, box.clientHeight], [-1, Infinity], [1, Infinity]];
+    } else if (typeof item.pos === 'number') {
       box.scrollTop = item.pos * box.scrollHeight - box.clientHeight / 3;
       const el = await settle(item, token, 300);
       if (el) return el;
-      phases = [[-1, box.clientHeight * 2], [1, Infinity], [-1, Infinity]];
+      phases = [[1, box.clientHeight], [-1, Infinity], [1, Infinity]];
     }
     for (const [direction, limit] of phases) {
       const el = await sweep(box, item, token, direction, limit, deadline);
@@ -635,6 +806,36 @@ async function searchFor(item, token) {
   } finally {
     box.style.overflowAnchor = '';
   }
+}
+
+// Go straight to where the answer was, measured from the end of the chat. If the chat isn't
+// that long yet, older messages haven't loaded: stay at the top so the site loads batch
+// after batch (no need to scroll through each one), until it's long enough.
+// Keeps waiting as long as the chat is still growing (long chats load in many batches),
+// up to 45 s. Returns the answer, or null if it isn't right there.
+async function seekFromEnd(box, item, token) {
+  const cap = Date.now() + 45000;
+  let height = -1;
+  let grewAt = performance.now();
+  while (Date.now() < cap) {
+    if (token !== jumpToken) return null;
+    const el = findMessage(item);
+    if (el) return el;
+    const target = box.scrollHeight - item.fromEnd - box.clientHeight / 3;
+    if (target >= 0) {
+      box.scrollTop = target;
+      return settle(item, token, 300);
+    }
+    if (box.scrollHeight !== height) {
+      height = box.scrollHeight;
+      grewAt = performance.now();
+    } else if (performance.now() - grewAt > 2500) {
+      return null; // nothing more loads: the sweeps take over from the top
+    }
+    if (box.scrollTop > 0) box.scrollTop = 0;
+    await nextFrame();
+  }
+  return null;
 }
 
 // Checks every frame for up to ms (lets the site put newly visible messages in the page).
@@ -682,10 +883,12 @@ async function sweep(box, item, token, direction, limit, deadline) {
     // The site pulled us back to the bottom: tell it again to let go.
     if (direction < 0 && box.scrollTop > before + 200) releaseStickToBottom(box);
 
+    // At the top, give the site time to load the next batch of older messages.
+    const patience = direction < 0 && box.scrollTop <= 0 ? 2500 : 1000;
     if (moved > progress + 50) {
       progress = moved;
       progressAt = now;
-    } else if (now - progressAt > 1000) {
+    } else if (now - progressAt > patience) {
       const atEnd = direction < 0
         ? box.scrollTop <= 0
         : box.scrollTop >= box.scrollHeight - box.clientHeight - 1;
@@ -705,7 +908,13 @@ async function sweep(box, item, token, direction, limit, deadline) {
 async function openItem(item) {
   if (item.convId && item.convId === acb.convId) return jumpTo(item);
   if (!item.url) return;
-  await setPendingJump(item.id, item.url, panel.box ? panel.view : null);
+  await setPendingJump(item.id, item.url, panel.box ? panel.view : null, panel.listScroll);
+  // Another site (a ChatGPT answer while on Claude, a web clip): open it in a new tab and
+  // leave this one as it is. The new tab picks up pendingJump like any other chat.
+  if (!sameSite(item.url)) {
+    chrome.runtime.sendMessage({ type: 'open-tab', url: item.url }).catch(() => {});
+    return;
+  }
   const link = linkTo(item.url);
   if (link) {
     acb.leaving = new Set(getMessages(acb.adapter).map(m => m.el));
@@ -735,6 +944,15 @@ async function waitForQuiet() {
   acb.leaving = null;
 }
 
+// Is url on the AI site this tab is on (perplexity.ai and www.perplexity.ai count as one)?
+function sameSite(url) {
+  try {
+    return getAdapter(new URL(url).hostname) === acb.adapter;
+  } catch (e) {
+    return false;
+  }
+}
+
 function samePage(a, b) {
   try {
     const x = new URL(a), y = new URL(b);
@@ -755,6 +973,9 @@ async function checkPendingJump() {
   // After a full page load the panel is gone: reopen it the way it was.
   if (pending.panelView && !panel.box) {
     panel.view = pending.panelView;
+    panel.shownView = pending.panelView; // same list as before: keep its scroll spot
+    panel.shownConv = acb.convId;
+    panel.listScroll = pending.panelScroll || 0;
     togglePanel();
   }
   const { items } = await getData();
@@ -768,7 +989,7 @@ async function checkPendingJump() {
 // ---------- Panel (Alt+B) ----------
 
 // view: 'chat' or a projectId. shownView: the view the list on screen was drawn for.
-const panel = { box: null, view: 'chat', shownView: null };
+const panel = { box: null, view: 'chat', shownView: null, shownConv: null, listScroll: 0 };
 
 function togglePanel() {
   if (panel.box) {
@@ -779,11 +1000,14 @@ function togglePanel() {
   panel.box = h('div', 'acb-ui acb-panel');
   // Keep the site from reacting to keys pressed in the panel.
   panel.box.addEventListener('keydown', e => e.stopPropagation());
-  document.body.append(panel.box);
-  renderPanel().then(async () => {
-    const pos = await getPanelPos();
+  // Hidden until it's filled and moved to where the user dragged it last, so it doesn't
+  // flash in the default corner first.
+  const box = panel.box;
+  box.style.visibility = 'hidden';
+  document.body.append(box);
+  Promise.all([renderPanel(), getPanelPos()]).then(([, pos]) => {
     if (pos) placePanel(pos.left, pos.top);
-  });
+  }).finally(() => { box.style.visibility = ''; });
 }
 
 // Moves the panel, keeping its top bar inside the window. Returns where it ended up.
@@ -886,13 +1110,20 @@ async function renderPanel() {
       : 'No items in this project yet.'));
   }
 
-  // Redrawing builds a new list: keep the old list's scroll spot if it's the same view.
-  const oldList = box.querySelector('.acb-panel-list');
-  const keepScroll = oldList && panel.shownView === panel.view ? oldList.scrollTop : 0;
+  // Redrawing builds a new list (e.g. after every jump, which saves the answer's position):
+  // keep the user's scroll spot if it's the same view. It's remembered while scrolling, and
+  // put back now and again next frame, in case the new list wasn't laid out yet.
+  // "This chat" in another chat is a different list, so that starts at the top.
+  const sameList = panel.shownView === panel.view && (panel.view !== 'chat' || panel.shownConv === acb.convId);
+  const keepScroll = sameList ? panel.listScroll || 0 : 0;
+  list.addEventListener('scroll', () => { panel.listScroll = list.scrollTop; }, { passive: true });
   box.textContent = '';
   box.append(head, list);
   list.scrollTop = keepScroll;
+  requestAnimationFrame(() => { if (list.isConnected) list.scrollTop = keepScroll; });
+  panel.listScroll = keepScroll;
   panel.shownView = panel.view;
+  panel.shownConv = acb.convId;
 }
 
 // ---------- Start ----------

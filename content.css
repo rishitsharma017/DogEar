@@ -7,10 +7,12 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  color: #8a8a8a;
+  /* Defaults (Claude); --acb-star-* are set from the site's own button where the adapter
+     says so (starLike), so the ☆ matches it. */
+  width: var(--acb-star-box, 24px);
+  height: var(--acb-star-box, 24px);
+  border-radius: var(--acb-star-radius, 6px);
+  color: var(--acb-star-color, #8a8a8a);
   cursor: pointer;
   user-select: none;
   opacity: 0;
@@ -18,8 +20,8 @@
 }
 
 .acb-star svg {
-  width: 16px;
-  height: 16px;
+  width: var(--acb-star-icon, 16px);
+  height: var(--acb-star-icon, 16px);
   fill: none;
   stroke: currentColor;
   stroke-width: 1.9;
@@ -31,9 +33,11 @@
 }
 
 /* Empty ☆ is hidden until you hover the answer (acb-turn = answer + its button row,
-   acb-host = the answer itself when there's no row). Saved ★ always shows. */
+   acb-host = the answer itself when there's no row). Saved ★ always shows, and so does a ☆
+   that copies a site button (acb-matched) on sites whose buttons are always there. */
 .acb-turn:hover .acb-star,
 .acb-host:hover > .acb-star,
+.acb-star.acb-matched,
 .acb-star:focus-visible,
 .acb-star.acb-open,
 .acb-star.acb-saved {
@@ -361,4 +365,172 @@
   color: #ffffff;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
   font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Cover over the chat while a jump is searching (hides the site shifting the page) */
+.acb-cover {
+  all: initial;
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(12, 12, 12, 0.35) 0%, rgba(12, 12, 12, 0.78) 100%);
+  backdrop-filter: blur(10px) saturate(115%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.acb-cover.acb-show {
+  opacity: 1;
+}
+
+.acb-cover-card {
+  all: initial;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 12px 12px 14px;
+  border-radius: 16px;
+  background: rgba(32, 32, 32, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  color: #ffffff;
+  font: 14px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+  transform: scale(0.96) translateY(4px);
+  transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.acb-cover.acb-show .acb-cover-card {
+  transform: none;
+}
+
+/* Spinner: a gold arc sweeping around a pulsing star */
+.acb-spinner {
+  all: initial;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.acb-spinner-ring {
+  all: initial;
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(245, 179, 1, 0) 0deg, rgba(245, 179, 1, 0.15) 120deg, #f5b301 330deg, rgba(245, 179, 1, 0) 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+  /* !important: some sites stop every animation on the page (reduced-motion settings). */
+  animation: acb-spin 0.9s linear infinite !important;
+}
+
+.acb-spinner svg {
+  width: 16px;
+  height: 16px;
+  fill: #f5b301;
+  stroke: #f5b301;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(245, 179, 1, 0.6));
+  animation: acb-pulse 1.4s ease-in-out infinite !important;
+}
+
+@keyframes acb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes acb-pulse {
+  0%, 100% {
+    transform: scale(0.85);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+.acb-cover-text {
+  all: initial;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-right: 6px;
+  font: inherit;
+  color: inherit;
+}
+
+.acb-cover-title {
+  all: initial;
+  font: 600 14px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #ffffff;
+}
+
+.acb-cover-hint {
+  all: initial;
+  font: 12px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.acb-cover-cancel {
+  all: initial;
+  cursor: pointer;
+  padding: 7px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font: 500 13px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  transition: background 0.15s ease;
+}
+
+.acb-cover-cancel:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.acb-cover-cancel:focus-visible {
+  outline: 2px solid #f5b301;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acb-spinner-ring,
+  .acb-spinner svg {
+    animation-duration: 2.5s !important;
+  }
+
+  .acb-cover-card {
+    transition: none;
+  }
+}
+
+/* Tooltip on the ☆ ("Bookmark"), styled like the sites' own button tooltips */
+.acb-tip {
+  all: initial;
+  position: fixed;
+  z-index: 2147483647;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #2f2f2f;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font: 500 13px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.acb-tip.acb-show {
+  opacity: 1;
 }

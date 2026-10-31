@@ -31,6 +31,53 @@ const ADAPTERS = [
       return turn ? turn.getAttribute('data-turn-key') : '';
     },
     isBusy: el => el.closest('[data-is-streaming="true"]') !== null
+  },
+  {
+    name: 'ChatGPT',
+    hosts: ['chatgpt.com'],
+    // /c/<id>, also inside a project (/g/g-p-…/c/<id>)
+    convPattern: /\/c\/([0-9a-f-]{36})/i,
+    // Each question and answer is a "search unit" ending in :user or :assistant.
+    userSelectors: [
+      '[data-chatgpt-search-unit-key$=":user"]',
+      '[data-content-search-unit-key$=":user"]',
+      '[data-message-author-role="user"]' // older ChatGPT pages
+    ],
+    aiSelectors: [
+      '[data-chatgpt-search-unit-key$=":assistant"]',
+      '[data-content-search-unit-key$=":assistant"]',
+      '[data-message-author-role="assistant"]'
+    ],
+    // The row under an answer: Copy, Read aloud, Share, Regenerate, More. The row itself has
+    // no stable name, so find it by its buttons. Copy alone isn't enough: cards inside an
+    // answer (e.g. an "Email" draft) have their own Copy button. ("Copy message" = questions.)
+    actionsSelectors: [
+      'div:has(> button[aria-label="Copy"]):has(> button[aria-label="Regenerate response"])',
+      'div:has(> button[aria-label="Copy"]):has(> button[aria-label="Read aloud"])',
+      'div:has(> button[aria-label="Copy"]):has(> button[aria-label="More actions"])'
+    ],
+    // ☆ goes just before "More actions" (…), and copies the look of the Copy button.
+    starBefore: 'button[aria-label="More actions"]',
+    starLike: 'button[aria-label="Copy"]',
+    // After a jump, light up only the question's speech bubble (the row is the full chat width).
+    highlightSelectors: ['[data-user-message-bubble]'],
+    textSelectors: ['[data-markdown-text-style="assistant-message"]', '.markdown'],
+    // "ChatGPT said:" for screen readers, and the code block header ("Python", copy buttons).
+    skipSelectors: ['[data-markdown-copy="exclude"]', '.sr-only'],
+    titleSuffix: /\s+[-–|]\s+ChatGPT$/,
+    msgId: el => {
+      const tagged = el.querySelector('[data-chatgpt-selection-message-id]');
+      if (tagged) return tagged.getAttribute('data-chatgpt-selection-message-id');
+      const ids = el.getAttribute('data-chatgpt-search-message-ids');
+      if (ids) return ids.split(' ')[0];
+      const old = el.closest('[data-message-id]');
+      return old ? old.getAttribute('data-message-id') : '';
+    },
+    // The turn says "complete" once the answer has finished writing.
+    isBusy: el => {
+      const turn = el.closest('[data-talvt-turn-state]');
+      return turn !== null && turn.getAttribute('data-talvt-turn-state') !== 'complete';
+    }
   }
 ];
 
@@ -82,15 +129,19 @@ function getMessages(adapter) {
 
 // The site's button row for this AI answer, or null. Looks inside the answer first,
 // then a few levels up, but never so high that another answer is included.
+// Each selector is tried at every level before the next, looser one, so a loose match
+// inside the answer (a card's own buttons) never beats an exact match just below it.
 function getActionBar(adapter, aiEl) {
   const sels = (adapter && adapter.actionsSelectors) || [];
   try {
-    let box = aiEl;
-    for (let level = 0; box && level < 5; level++, box = box.parentElement) {
-      if (level > 0 && queryIn(box, adapter.aiSelectors).length > 1) break;
-      const bars = queryIn(box, sels);
-      if (bars.length === 1) return bars[0];
-      if (bars.length > 1) break;
+    for (const sel of sels) {
+      let box = aiEl;
+      for (let level = 0; box && level < 5; level++, box = box.parentElement) {
+        if (level > 0 && queryIn(box, adapter.aiSelectors).length > 1) break;
+        const bars = queryIn(box, [sel]);
+        if (bars.length === 1) return bars[0];
+        if (bars.length > 1) break;
+      }
     }
   } catch (e) {
     // Never break the page.

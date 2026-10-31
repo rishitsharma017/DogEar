@@ -82,8 +82,15 @@ function addProject(name) {
   });
 }
 
+// Inbox holds right-click saves from any website. Found by its name.
+const INBOX_NAME = 'Inbox';
+
 function ensureInbox() {
-  return addProject('Inbox');
+  return addProject(INBOX_NAME);
+}
+
+function isInbox(project) {
+  return !!project && project.name.toLowerCase() === INBOX_NAME.toLowerCase();
 }
 
 function renameProject(projectId, name) {
@@ -151,8 +158,10 @@ function emptyTrash() {
   });
 }
 
-// fields: { projectId, ai, text, plain?, question, chatTitle, url, convId, msgId, pos? }
+// fields: { projectId, ai, text, plain?, question, chatTitle, url, convId, msgId, pos?, fromEnd? }
 // pos = where the answer sat in the chat (0 = top, 1 = bottom), a hint for jumping back.
+// fromEnd = px from the answer to the end of the chat: the better hint, since sites load
+// older messages at the top and that changes pos but not fromEnd.
 // plain = the answer as plain page text; hash/prefix come from it so the page can find it again.
 // remember = make this the last-used project (the ☆ picker's default). Right-click saves don't.
 function addItem(fields, { remember = true } = {}) {
@@ -170,6 +179,7 @@ function addItem(fields, { remember = true } = {}) {
       convId: fields.convId || '',
       msgId: fields.msgId || '',
       pos: typeof fields.pos === 'number' ? fields.pos : null,
+      fromEnd: typeof fields.fromEnd === 'number' ? fields.fromEnd : null,
       hash: hashText(source),
       prefix: makePrefix(source),
       createdAt: Date.now()
@@ -190,11 +200,14 @@ function moveItem(itemId, projectId) {
   });
 }
 
-// Items saved before pos existed get it the first time they're found, so later jumps are quick.
-function setItemPos(itemId, pos) {
+// Items saved before these hints existed get them the first time they're found, so later
+// jumps are quick.
+function setItemHints(itemId, pos, fromEnd) {
   return update(data => {
     const item = data.items.find(it => it.id === itemId);
-    if (item) item.pos = pos;
+    if (!item) return;
+    item.pos = pos;
+    item.fromEnd = fromEnd;
   });
 }
 
@@ -227,10 +240,11 @@ function moveItems(itemIds, projectId) {
 // ---------- Jump to a message in another chat ----------
 
 // Saved just before opening another chat; read by that chat once it has loaded.
-// panelView = what the Alt+B panel showed, so it can reopen the same way after a reload.
-function setPendingJump(itemId, url, panelView) {
+// panelView = what the Alt+B panel showed and panelScroll = how far its list was scrolled,
+// so it can reopen the same way after a reload.
+function setPendingJump(itemId, url, panelView, panelScroll) {
   return queued(() => chrome.storage.local.set({
-    pendingJump: { itemId, url, time: Date.now(), panelView: panelView || null }
+    pendingJump: { itemId, url, time: Date.now(), panelView: panelView || null, panelScroll: panelScroll || 0 }
   }));
 }
 

@@ -26,7 +26,8 @@ Two use cases. Every decision should serve these:
      tick items → move or delete them together; "Done" hides them again.
      Every Move menu has "+ New project…". Projects stay flat (no folders inside folders)
 5. Right-click selected text on any site → save to "Inbox" (user's choice: keeps web clips apart
-   from chat projects; doesn't change the ☆ picker's last-used project), ✓ badge on the icon for 2 s
+   from chat projects; doesn't change the ☆ picker's last-used project), ✓ badge on the icon for 2 s.
+   Inbox is hidden from the ☆ picker on every site (user's choice); it still shows in the Library and panel
 
 ## File structure (keep it exactly like this)
 - manifest.json
@@ -43,12 +44,15 @@ background.js loads common.js with `importScripts`. library.html loads it with a
 
 ## Data (chrome.storage.local)
 - projects: [{ id, name, createdAt }]
-- items: [{ id, projectId, ai, text, question, chatTitle, url, convId, msgId, pos, hash, prefix, createdAt }]
-  (pos = where the answer sat in the chat when saved, 0 = top … 1 = bottom; a hint so the jump starts near it)
+- items: [{ id, projectId, ai, text, question, chatTitle, url, convId, msgId, pos, fromEnd, hash, prefix, createdAt }]
+  (pos = where the answer sat in the chat when saved, 0 = top … 1 = bottom; a hint so the jump starts near it.
+   fromEnd = px from the answer to the end of the chat: the main hint, because sites load older
+   messages at the top, which changes pos but not fromEnd. Old items learn both after a jump)
 - lastProjectId
 - trash: [{ id, kind: 'project' | 'item', deletedAt, project, items }] (kept 30 days;
   for an item, project = the project it was in, so Restore can bring that back too)
-- pendingJump: { itemId, url, time, panelView } (temporary, see "Must handle"; panelView = reopen the panel like this)
+- pendingJump: { itemId, url, time, panelView, panelScroll } (temporary, see "Must handle"; panelView and
+  panelScroll = reopen the panel like this, scrolled to the same spot)
 - panelPos: { left, top } where the user dragged the Alt+B panel (null = default top-right)
 - Store the actual answer text, not just a link, so saved items survive chat deletion
 - text is simple markdown: code blocks, lists, headings, bold, links. Everything else becomes plain text
@@ -58,9 +62,12 @@ background.js loads common.js with `importScripts`. library.html loads it with a
 - All writes go through common.js, one at a time (a write queue), so quick saves don't overwrite each other
 
 ## Adapter rules
-- Each site: { name, hosts, convPattern, userSelectors[], aiSelectors[], actionsSelectors[]?, textSelectors[]?, skipSelectors[]?, titleSuffix?, msgId?, isBusy? }
+- Each site: { name, hosts, convPattern, userSelectors[], aiSelectors[], actionsSelectors[]?, textSelectors[]?, skipSelectors[]?, titleSuffix?, msgId?, isBusy?, starBefore?, starLike?, highlightSelectors[]? }
   (isBusy(el) = answer is still being written, so no ☆ yet)
   (actionsSelectors = the site's own button row under an answer; ☆ goes there, and its text is never part of the answer)
+  (starBefore = the button in that row the ☆ goes in front of; starLike = the button whose size
+   and colour the ☆ copies, so it looks built-in. Both optional: default is after the last button)
+  (highlightSelectors = the part of a message the jump lights up, e.g. the question's bubble; default: all of it)
 - Several backup selectors per site, tried in order
 - Prefer stable attributes (data-testid, data-message-author-role, aria-*), never generated class names
 - If a site finds 0 messages, fail quietly, never break the page
@@ -72,7 +79,7 @@ background.js loads common.js with `importScripts`. library.html loads it with a
 - Claude (confirmed) keeps only messages near the screen in the page and swaps them in and out
   while scrolling. So a message that isn't on the page may still exist further up or down
 - Long chats: some sites only load older messages as you scroll up. If not found, scroll the chat
-  up step by step and retry. Give up after ~15 s and show a small "Couldn't find this message" note
+  up step by step and retry. Give up after ~15 s (up to 45 s while a long chat is still loading older messages) and show a small "Couldn't find this message" note
 - Opening an item from another chat: save pendingJump, then open its URL. When the chat loads,
   content.js checks pendingJump (URL matches, under 60 s old), jumps to the message, then clears it
 - Alt+B is a Chrome `commands` shortcut in manifest.json, not a page key listener
@@ -104,7 +111,7 @@ Build order. One step at a time; Claude is the first site.
 - [x] 7. Jump to message: same chat, long chats (scroll up + retry), other chats (pendingJump)
 - [x] 8. Library page: projects (rename, delete + undo), search, AI filter, move, copy, delete, export .md
 - [x] 9. Right-click save on any site
-- [ ] 10. ChatGPT adapter
+- [x] 10. ChatGPT adapter
 - [ ] 11. Gemini adapter
 - [ ] 12. Perplexity adapter
 - [ ] 13. UI polish: ☆ next to each site's own buttons (copy/retry) so it looks built-in; tidy picker, panel, library

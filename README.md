@@ -4,10 +4,10 @@ A Chrome extension for bookmarking answers in AI chats. Star an answer, then jum
 back to it later, even in a chat with hundreds of messages. Saved answers go into project
 folders, so one research topic can collect answers from several AIs.
 
-> **Work in progress.** It currently works on **Claude (claude.ai)** only.
-> ChatGPT, Gemini and Perplexity are planned next.
+> **Work in progress.** It currently works on **Claude (claude.ai)** and **ChatGPT (chatgpt.com)**.
+> Gemini and Perplexity are planned next.
 
-## What works now (Claude)
+## What works now (Claude and ChatGPT)
 
 - **☆ on every answer.** Click it, pick a project or type a new one, and the answer is saved (☆ turns ★).
 - **★ to change it.** Move the answer to another project, or remove it.
@@ -19,11 +19,11 @@ folders, so one research topic can collect answers from several AIs.
 - **Library page** (click the toolbar icon): all your projects, search, filter by AI, copy,
   move, rename, export a project as Markdown, and **Recently deleted** to restore anything
   deleted in the last 30 days.
+- **Right-click "Save selection"** on any website: the selected text goes into **Inbox**.
 
 ## Planned
 
-- Right-click "Save selection" on any website
-- ChatGPT, Gemini and Perplexity support
+- Gemini and Perplexity support
 
 ## Install (developer mode)
 
@@ -33,7 +33,8 @@ The extension isn't in the Chrome Web Store yet. To try it:
 2. Open `chrome://extensions` in Chrome.
 3. Turn on **Developer mode** (top right).
 4. Click **Load unpacked** and choose the unzipped folder.
-5. Open a chat on [claude.ai](https://claude.ai) and hover over an answer to see the ☆.
+5. Open a chat on [claude.ai](https://claude.ai) or [chatgpt.com](https://chatgpt.com) and look for the ☆ in
+   the buttons under an answer.
 
 ## Privacy
 
