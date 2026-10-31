@@ -4,12 +4,17 @@
   --panel: #ffffff;
   --side: #efeee9;
   --text: #1f1f1d;
+  --text-2: #3d3c39;
   --muted: #6b6a66;
   --line: #e2e0da;
   --accent: #c8901a;
+  --accent-hover: #b37f12;
+  --on-accent: #1f1a10;
   --accent-soft: #f6ead0;
   --danger: #b3261e;
   --hover: rgba(0, 0, 0, 0.05);
+  --code: #f1f0ec;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,17 +23,34 @@
     --panel: #252524;
     --side: #171716;
     --text: #ecebe7;
+    --text-2: #c9c7c1;
     --muted: #9d9b95;
     --line: #3a3936;
     --accent: #e0aa3e;
+    --accent-hover: #ebbb57;
+    --on-accent: #1f1a10;
     --accent-soft: #3d3220;
     --danger: #f2867d;
     --hover: rgba(255, 255, 255, 0.06);
+    --code: #1b1b1a;
   }
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Browser surfaces in the page's own colours: selected text and scrollbars */
+::selection {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+html,
+.sidebar,
+.md-code,
+.md-table {
+  scrollbar-color: var(--line) transparent;
 }
 
 body {
@@ -68,6 +90,43 @@ option {
 }
 
 button.danger {
+  color: var(--danger);
+}
+
+button:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The one main action (Open chat): filled gold */
+button.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+button.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* Secondary actions: text only until pointed at */
+button.quiet,
+select.quiet {
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--muted);
+}
+
+button.quiet:hover,
+select.quiet:hover {
+  background-color: var(--hover);
+  color: var(--text);
+}
+
+button.quiet.danger:hover {
   color: var(--danger);
 }
 
@@ -237,6 +296,12 @@ h1 {
   text-align: center;
 }
 
+.empty p {
+  margin: 0 auto 12px;
+  max-width: 46ch;
+  text-wrap: balance;
+}
+
 /* ---------- Items ---------- */
 
 .item {
@@ -255,34 +320,76 @@ h1 {
   color: var(--muted);
 }
 
+/* Which AI: a small dot in that AI's colour, then its name */
 .ai {
-  padding: 1px 8px;
-  border-radius: 10px;
-  background: var(--accent-soft);
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 6px;
+  align-items: center;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ai-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ai, var(--muted));
+}
+
+.ai[data-ai="Claude"] { --ai: #d97757; }
+.ai[data-ai="ChatGPT"] { --ai: #10a37f; }
+.ai[data-ai="Gemini"] { --ai: #4c8df6; }
+.ai[data-ai="Perplexity"] { --ai: #20b8cd; }
+.ai[data-ai="Grok"] { --ai: #a1a1aa; }
+
+/* What a project row in Recently deleted is */
+.kind {
+  flex-shrink: 0;
   color: var(--text);
   font-weight: 600;
 }
 
 .details {
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
+.when {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* "·" between the parts of the details line */
+.meta .details::before,
+.meta .when::before {
+  content: "·";
+  margin-right: 8px;
+}
+
+/* The question is the card's title */
 .question {
   margin-top: 8px;
+  font-size: 16px;
   font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
+/* The answer: a step softer than the title, so the title leads */
 .text {
   margin-top: 6px;
-  max-height: 7.5em; /* 5 lines */
+  color: var(--text-2);
+  max-height: 7.75em; /* about 5 lines */
   overflow: hidden;
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
@@ -291,7 +398,161 @@ h1 {
 }
 
 .text.short {
-  max-height: 3em; /* 2 lines */
+  max-height: 3.1em; /* 2 lines */
+}
+
+/* A cut-off preview fades out instead of stopping mid-line */
+.text.clipped {
+  -webkit-mask-image: linear-gradient(#000 60%, transparent);
+  mask-image: linear-gradient(#000 60%, transparent);
+}
+
+/* ---------- Saved answer, formatted (library.js: renderMarkdown) ---------- */
+
+.md {
+  line-height: 1.55;
+}
+
+.md > :first-child {
+  margin-top: 0;
+}
+
+.md > :last-child {
+  margin-bottom: 0;
+}
+
+.md-p {
+  max-width: 72ch;
+  margin: 0 0 0.65em;
+  text-wrap: pretty;
+}
+
+/* Headings: more space above than below, small steps (they sit inside a card) */
+.md-h {
+  max-width: 72ch;
+  margin: 1.1em 0 0.35em;
+  font-weight: 650;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+h3.md-h {
+  font-size: 16px;
+}
+
+h4.md-h {
+  font-size: 15px;
+}
+
+h5.md-h {
+  font-size: 14px;
+}
+
+.md-list {
+  max-width: 72ch;
+  margin: 0 0 0.65em;
+  padding-left: 1.4em;
+}
+
+.md-list li {
+  margin: 0.15em 0;
+}
+
+.md-list li::marker {
+  color: var(--muted);
+}
+
+.md-list .md-list,
+.md-list .md-p {
+  margin-bottom: 0.2em;
+}
+
+.md strong {
+  font-weight: 650;
+}
+
+.md-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.md-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.md-inline {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--code);
+  border: 1px solid var(--line);
+  font: 0.88em/1 var(--mono);
+}
+
+.md-code {
+  position: relative;
+  margin: 0.4em 0 0.8em;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code);
+  overflow-x: auto;
+  font: 12.5px/1.55 var(--mono);
+  tab-size: 2;
+}
+
+.md-code code {
+  font: inherit;
+  white-space: pre;
+}
+
+/* The code's language, small in the corner */
+.md-code[data-lang]::before {
+  content: attr(data-lang);
+  float: right;
+  margin: -2px -2px 0 12px;
+  color: var(--muted);
+  font: 11px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.md-quote {
+  max-width: 72ch;
+  margin: 0 0 0.65em;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--hover);
+  color: var(--muted);
+}
+
+.md-hr {
+  margin: 0.9em 0;
+  border: none;
+  border-top: 1px solid var(--line);
+}
+
+.md-table {
+  margin: 0.4em 0 0.8em;
+  overflow-x: auto;
+}
+
+.md-table table {
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.md-table th,
+.md-table td {
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.md-table th {
+  background: var(--hover);
+  font-weight: 600;
 }
 
 .item.deleted {
@@ -347,6 +608,7 @@ h1 {
 
 .item-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
   margin-top: 8px;
@@ -356,8 +618,28 @@ h1 {
   flex: 1;
 }
 
+/* Move and Delete: shown while the card is hovered or a control in it has focus */
+.item-tools {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+.item:hover .item-tools,
+.item:focus-within .item-tools {
+  opacity: 1;
+}
+
+/* Touch screens have no hover: always show them */
+@media (hover: none) {
+  .item-tools {
+    opacity: 1;
+  }
+}
+
 .move {
-  max-width: 160px;
+  max-width: 170px;
 }
 
 /* ---------- Undo bar ---------- */

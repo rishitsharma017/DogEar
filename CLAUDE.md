@@ -124,13 +124,14 @@ Build order. One step at a time; Claude is the first site.
       the user (grok.com is enough)
 - [ ] 14. UI polish: ☆ next to each site's own buttons (copy/retry) so it looks built-in; tidy picker, panel,
       library; more visual work (the user wants it to look much better). Library list (user's picks):
-      - show saved Markdown formatted (bold, lists, code boxes, dividers), built with DOM calls, no innerHTML
-      - Move dropdown labelled "Move to…" (now it just shows the project name)
+      - Done (from /impeccable critique, user picked "quiet with gold accents"): saved Markdown shown
+        formatted (DOM calls, no innerHTML); calmer cards (gold "Open chat", quiet Copy, Move/Delete on
+        hover, "Move to…"); question as card title, softer answer, AI colour dots, relative dates
       - "+ New project" button in the sidebar
       - sort (newest / oldest / by AI) and group a project's items by chat
       - highlight search matches in the results
-      - relative dates ("2 h ago", full date on hover), "/" focuses search, long questions cut to 2 lines
-        (click for all), Copy as plain text or Markdown
+      - "/" focuses search, click a long question to see all of it, Copy as plain text or Markdown
+      - tidy the save picker and the Alt+B panel
 - [ ] 15. Final check on every site, fix what fails (no new features). Not yet confirmed by the user:
       ☆ tooltip matches each site's own; Gemini saved text (no "You said", readable maths); Gemini bubble
       glow after a jump; ☆ only after a new answer finishes (Gemini); ChatGPT "Email" card text when saved;

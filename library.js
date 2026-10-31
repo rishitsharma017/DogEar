@@ -10,6 +10,173 @@ function h(tag, className, text) {
   return e;
 }
 
+// ---------- Saved Markdown → page ----------
+// Saved answers are simple Markdown (see "Data" in CLAUDE.md). Drawn with DOM calls and
+// textContent only, never innerHTML, so nothing in a saved answer can run as page code.
+
+const LIST_ITEM = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
+const BLOCK_START = /^(```|#{1,6}\s|>|(\s*)([-*+]|\d+[.)])\s|\|)/;
+
+function renderMarkdown(text) {
+  const box = document.createDocumentFragment();
+  renderBlocks(box, String(text || '').replace(/\r/g, '').split('\n'));
+  return box;
+}
+
+function renderBlocks(parent, lines) {
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (!line.trim()) { i++; continue; }
+
+    // ```lang … ``` → code box
+    const fence = line.match(/^\s*```\s*([\w+#.-]*)/);
+    if (fence) {
+      const code = [];
+      for (i++; i < lines.length && !/^\s*```\s*$/.test(lines[i]); i++) code.push(lines[i]);
+      i++;
+      const pre = h('pre', 'md-code');
+      if (fence[1]) pre.dataset.lang = fence[1];
+      pre.append(h('code', '', code.join('\n')));
+      parent.append(pre);
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,6})\s+(.*)$/);
+    if (heading) {
+      const level = Math.min(heading[1].length, 3);
+      parent.append(inline(h(`h${level + 2}`, 'md-h'), heading[2]));
+      i++;
+      continue;
+    }
+
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) {
+      parent.append(h('hr', 'md-hr'));
+      i++;
+      continue;
+    }
+
+    // | a | b | with a |---| line under the first row → table
+    if (/^\s*\|/.test(line) && /^\s*\|\s*:?-{2,}/.test(lines[i + 1] || '')) {
+      const rows = [];
+      for (; i < lines.length && /^\s*\|/.test(lines[i]); i++) rows.push(lines[i]);
+      parent.append(table(rows));
+      continue;
+    }
+
+    if (/^\s*>/.test(line)) {
+      const quoted = [];
+      for (; i < lines.length && /^\s*>/.test(lines[i]); i++) quoted.push(lines[i].replace(/^\s*>\s?/, ''));
+      const quote = h('blockquote', 'md-quote');
+      renderBlocks(quote, quoted);
+      parent.append(quote);
+      continue;
+    }
+
+    if (LIST_ITEM.test(line)) {
+      i = list(parent, lines, i);
+      continue;
+    }
+
+    // Paragraph: lines up to a blank line or the start of another block. A single line break
+    // inside it stays a line break (sites often write one line per box).
+    const para = [];
+    for (; i < lines.length && lines[i].trim() && !(para.length && BLOCK_START.test(lines[i])); i++) {
+      para.push(lines[i].trim());
+    }
+    parent.append(inline(h('p', 'md-p'), para.join('\n')));
+  }
+}
+
+// A run of list items from lines[i]. An item's following lines that are indented belong to
+// it (that's how nested lists and multi-line items are saved). Returns the next line index.
+function list(parent, lines, i) {
+  const first = lines[i].match(LIST_ITEM);
+  const indent = first[1].length;
+  const ordered = /\d/.test(first[2]);
+  const el = h(ordered ? 'ol' : 'ul', 'md-list');
+  if (ordered && parseInt(first[2], 10) !== 1) el.start = parseInt(first[2], 10);
+  while (i < lines.length) {
+    const m = lines[i].match(LIST_ITEM);
+    if (!m || m[1].length !== indent || /\d/.test(m[2]) !== ordered) break;
+    const body = [m[3]];
+    const cut = indent + m[2].length + 1;
+    for (i++; i < lines.length; i++) {
+      const next = lines[i];
+      if (!next.trim()) {
+        // A blank line ends the item unless more indented lines follow.
+        if (/^\s+\S/.test(lines[i + 1] || '') && (lines[i + 1].match(/^\s*/)[0].length > indent)) { body.push(''); continue; }
+        break;
+      }
+      const lead = next.match(/^\s*/)[0].length;
+      if (lead <= indent) break;
+      body.push(next.slice(Math.min(lead, cut)));
+    }
+    const li = h('li');
+    if (body.length === 1) inline(li, body[0]);
+    else renderBlocks(li, body);
+    el.append(li);
+    if (!lines[i] || !lines[i].trim()) {
+      // Blank line between items of the same list: keep going if the list continues.
+      const next = lines[i + 1] && lines[i + 1].match(LIST_ITEM);
+      if (next && next[1].length === indent && /\d/.test(next[2]) === ordered) i++;
+      else break;
+    }
+  }
+  parent.append(el);
+  return i;
+}
+
+function table(rows) {
+  const cells = row => row.trim().replace(/^\|/, '').replace(/\|$/, '')
+    .split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|'));
+  const wrap = h('div', 'md-table');
+  const t = h('table');
+  const headRow = h('tr');
+  for (const c of cells(rows[0])) headRow.append(inline(h('th'), c));
+  const head = h('thead');
+  head.append(headRow);
+  const body = h('tbody');
+  for (const row of rows.slice(2)) {
+    const tr = h('tr');
+    for (const c of cells(row)) tr.append(inline(h('td'), c));
+    body.append(tr);
+  }
+  t.append(head, body);
+  wrap.append(t);
+  return wrap;
+}
+
+// Inline marks: `code`, **bold**, *italic*, [text](https://…). Single line breaks → <br>.
+const INLINE = /(`+)([\s\S]+?)\1|\*\*([\s\S]+?)\*\*|\*(?=\S)([^*\n]+?)\*|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g;
+
+function inline(parent, s) {
+  let last = 0;
+  for (const m of s.matchAll(INLINE)) {
+    plain(parent, s.slice(last, m.index));
+    if (m[1]) parent.append(h('code', 'md-inline', m[2]));
+    else if (m[3]) parent.append(inline(h('strong'), m[3]));
+    else if (m[4]) parent.append(inline(h('em'), m[4]));
+    else {
+      const a = h('a', 'md-link');
+      a.href = m[6];
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      parent.append(inline(a, m[5]));
+    }
+    last = m.index + m[0].length;
+  }
+  plain(parent, s.slice(last));
+  return parent;
+}
+
+function plain(parent, s) {
+  s.split('\n').forEach((part, n) => {
+    if (n) parent.append(h('br'));
+    if (part) parent.append(document.createTextNode(part));
+  });
+}
+
 const state = {
   view: 'all',        // 'all', 'trash' or a projectId
   search: '',
@@ -70,7 +237,20 @@ async function render() {
   const list = $('list');
   list.replaceChildren();
   if (!shown.length) {
-    list.append(h('p', 'empty', emptyText(inView.length, filtered)));
+    const empty = h('div', 'empty');
+    empty.append(h('p', '', emptyText(inView.length, filtered)));
+    if (filtered && inView.length) {
+      const clear = h('button', '', state.search ? 'Clear search' : 'Show all AIs');
+      clear.addEventListener('click', () => {
+        state.search = '';
+        state.ai = '';
+        $('search').value = '';
+        render();
+        $('search').focus();
+      });
+      empty.append(clear);
+    }
+    list.append(empty);
     return;
   }
   const names = new Map(projects.map(p => [p.id, p.name]));
@@ -82,7 +262,7 @@ async function render() {
 function emptyText(total, filtered) {
   if (filtered && total) return 'Nothing matches your search.';
   if (state.view !== 'all') return 'This project is empty.';
-  return 'Nothing saved yet. Hover over an answer on claude.ai and click ☆ to save it.';
+  return 'Nothing saved yet. Click ☆ under any answer on Claude, ChatGPT, Gemini, Perplexity or Grok to save it here.';
 }
 
 function matches(item, search) {
@@ -124,22 +304,26 @@ function renderTrash(trash) {
 
 function trashCard(entry) {
   const card = h('article', 'item deleted');
-  const deleted = `deleted ${new Date(entry.deletedAt).toLocaleDateString()}`;
   const meta = h('div', 'meta');
+  const deleted = when(entry.deletedAt, 'deleted ');
 
   if (entry.kind === 'project') {
     const n = entry.items.length;
-    meta.append(h('span', 'ai', 'Project'), h('span', 'details', `${n} item${n === 1 ? '' : 's'} · ${deleted}`));
+    meta.append(h('span', 'kind', 'Project'), h('span', 'details', `${n} item${n === 1 ? '' : 's'}`), deleted);
     card.append(meta, h('div', 'question', entry.project.name));
   } else {
     const item = entry.items[0];
-    if (item.ai) meta.append(h('span', 'ai', item.ai));
+    meta.append(aiMark(item.ai));
     const from = entry.project ? `from ${entry.project.name}` : '';
-    const details = [from, item.chatTitle, deleted].filter(Boolean);
-    meta.append(h('span', 'details', details.join(' · ')));
+    const details = [from, item.chatTitle].filter(Boolean).join(' · ');
+    if (details) meta.append(h('span', 'details', details));
+    meta.append(deleted);
     card.append(meta);
     if (item.question) card.append(h('div', 'question', item.question));
-    card.append(h('div', 'text short', item.text));
+    const text = h('div', 'text md short');
+    text.append(renderMarkdown(item.text));
+    card.append(text);
+    requestAnimationFrame(() => text.classList.toggle('clipped', text.scrollHeight > text.clientHeight + 2));
   }
 
   const actions = h('div', 'item-actions');
@@ -154,6 +338,42 @@ function trashCard(entry) {
   actions.append(restore, forever);
   card.append(actions);
   return card;
+}
+
+// Which AI an answer came from: its name with a small dot in that AI's own colour (set in
+// library.css by data-ai), so answers from different AIs can be told apart at a glance.
+// Right-click saves have no AI: "Web clip".
+function aiMark(ai) {
+  const mark = h('span', 'ai');
+  mark.dataset.ai = ai || '';
+  mark.append(h('span', 'ai-dot'), document.createTextNode(ai || 'Web clip'));
+  return mark;
+}
+
+// "2 h ago", "Yesterday", "Oct 14"…; the full date and time on hover.
+function when(ms, prefix = '') {
+  const el = h('time', 'when', prefix + timeAgo(ms));
+  const date = new Date(ms);
+  el.dateTime = date.toISOString();
+  el.title = date.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' });
+  return el;
+}
+
+function timeAgo(ms) {
+  const min = Math.round((Date.now() - ms) / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min} min ago`;
+  const hours = Math.round(min / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const day = d => new Date(d).setHours(0, 0, 0, 0);
+  const days = Math.round((day(Date.now()) - day(ms)) / 86400000);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  const date = new Date(ms);
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+  return date.toLocaleDateString(undefined, sameYear
+    ? { month: 'short', day: 'numeric' }
+    : { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function navRow(view, name, count) {
@@ -196,67 +416,87 @@ function itemCard(item, projects, projectName, selectable) {
     });
     meta.append(tick);
   }
-  if (item.ai) meta.append(h('span', 'ai', item.ai));
-  const details = [item.chatTitle, projectName, new Date(item.createdAt).toLocaleDateString()].filter(Boolean);
-  meta.append(h('span', 'details', details.join(' · ')));
+  meta.append(aiMark(item.ai));
+  const details = [item.chatTitle, projectName].filter(Boolean).join(' · ');
+  if (details) meta.append(h('span', 'details', details));
+  meta.append(when(item.createdAt));
   card.append(meta);
 
   if (item.question) card.append(h('div', 'question', item.question));
 
-  const text = h('div', 'text', item.text);
+  const text = h('div', 'text md');
+  text.append(renderMarkdown(item.text));
   const open = state.expanded.has(item.id);
   text.classList.toggle('open', open);
   card.append(text);
 
   const actions = h('div', 'item-actions');
-  // Only offer "Show more" when the text is actually cut off.
+  // Only offer "Show more" when the text is actually cut off; a cut-off preview fades out.
   const more = h('button', 'link', open ? 'Show less' : 'Show more');
   more.hidden = true;
-  requestAnimationFrame(() => { more.hidden = !open && text.scrollHeight <= text.clientHeight + 2; });
+  requestAnimationFrame(() => {
+    const cut = text.scrollHeight > text.clientHeight + 2;
+    more.hidden = !open && !cut;
+    text.classList.toggle('clipped', !open && cut);
+  });
   more.addEventListener('click', () => {
     if (state.expanded.has(item.id)) state.expanded.delete(item.id);
     else state.expanded.add(item.id);
     const nowOpen = state.expanded.has(item.id);
     text.classList.toggle('open', nowOpen);
+    text.classList.toggle('clipped', !nowOpen);
     more.textContent = nowOpen ? 'Show less' : 'Show more';
   });
   actions.append(more, h('span', 'spacer'));
 
-  if (item.url) {
-    // Right-click saves have no convId: just open the page they came from.
-    const go = h('button', '', item.convId ? 'Open chat' : 'Open page');
-    go.title = item.convId ? 'Open the chat and jump to this answer' : 'Open the page this was saved from';
-    go.addEventListener('click', () => openInChat(item));
-    actions.append(go);
-  }
+  // One clear action per card (Open chat, the gold one, last). Copy stays visible but quiet;
+  // Move and Delete only show while the card is hovered or has keyboard focus (item-tools).
+  const tools = h('div', 'item-tools');
 
-  const copy = h('button', '', 'Copy');
-  copy.title = 'Copy the answer text';
-  copy.addEventListener('click', async () => {
-    await navigator.clipboard.writeText(item.text);
-    copy.textContent = 'Copied ✓';
-    setTimeout(() => { copy.textContent = 'Copy'; }, 1500);
-  });
-  actions.append(copy);
-
-  const move = h('select', 'move');
+  const move = h('select', 'move quiet');
   move.title = 'Move to another project';
-  fillProjectMenu(move, projects);
-  move.value = item.projectId;
+  fillProjectMenu(move, projects, 'Move to…');
+  const here = [...move.options].find(o => o.value === item.projectId);
+  if (here) {
+    here.disabled = true;
+    here.textContent += ' (here)';
+  }
+  move.value = '';
   move.addEventListener('change', async () => {
     const projectId = await pickedProject(move.value);
-    if (projectId) moveItem(item.id, projectId);
-    else move.value = item.projectId;
+    move.value = '';
+    if (projectId && projectId !== item.projectId) moveItem(item.id, projectId);
   });
-  actions.append(move);
 
-  const del = h('button', 'danger', 'Delete');
-  del.title = 'Delete this saved answer';
+  const del = h('button', 'quiet danger', 'Delete');
+  del.title = 'Delete this saved answer (you can undo)';
   del.addEventListener('click', async () => {
     const entry = await deleteItem(item.id);
     if (entry) showUndo('Moved to Recently deleted.', () => restoreFromTrash(entry.id));
   });
-  actions.append(del);
+  tools.append(move, del);
+  actions.append(tools);
+
+  const copy = h('button', 'quiet', 'Copy');
+  copy.title = 'Copy the answer text';
+  copy.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(item.text);
+      copy.textContent = 'Copied ✓';
+    } catch (e) {
+      copy.textContent = 'Couldn’t copy';
+    }
+    setTimeout(() => { copy.textContent = 'Copy'; }, 1500);
+  });
+  actions.append(copy);
+
+  if (item.url) {
+    // Right-click saves have no convId: just open the page they came from.
+    const go = h('button', 'primary', item.convId ? 'Open chat' : 'Open page');
+    go.title = item.convId ? 'Open the chat and jump to this answer' : 'Open the page this was saved from';
+    go.addEventListener('click', () => openInChat(item));
+    actions.append(go);
+  }
 
   card.append(actions);
   return card;
