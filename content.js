@@ -315,15 +315,23 @@ function matchSiteButton(btn, bar) {
   const like = bar.querySelector(acb.adapter.starLike);
   // The icon may be an SVG (ChatGPT) or an icon-font element (Gemini's <mat-icon>). Not just
   // anything with "icon" in its class: that can be an invisible hover circle around it.
+  // With starIcon the adapter gives the size itself (Claude's icons can't be measured).
   const icon = like && (like.querySelector('svg') || like.querySelector('mat-icon'));
-  if (!like || !like.offsetWidth || !icon) return;
+  const own = acb.adapter.starIcon;
+  if (own) {
+    // The size is known even before the site's buttons are there (Claude adds an older answer's
+    // buttons only on hover); the colour is copied once they are.
+    btn.style.setProperty('--acb-star-icon', `${own.size}px`);
+    if (own.stroke) btn.style.setProperty('--acb-star-stroke', own.stroke);
+  }
+  if (!like || !like.offsetWidth || (!icon && !own)) return;
+  btn.style.setProperty('--acb-star-box', `${like.offsetWidth}px`);
   // The icon's own size, not its size on screen: some sites (Grok) zoom icons in when the row
   // appears, and measuring mid-zoom would copy a smaller size.
-  const size = { width: parseFloat(getComputedStyle(icon).width) || icon.getBoundingClientRect().width };
-  btn.style.setProperty('--acb-star-box', `${like.offsetWidth}px`);
-  const own = acb.adapter.starIcon;
-  btn.style.setProperty('--acb-star-icon', `${own ? own.size : Math.round(size.width)}px`);
-  if (own && own.stroke) btn.style.setProperty('--acb-star-stroke', own.stroke);
+  if (!own) {
+    const size = parseFloat(getComputedStyle(icon).width) || icon.getBoundingClientRect().width;
+    btn.style.setProperty('--acb-star-icon', `${Math.round(size)}px`);
+  }
   const hover = acb.adapter.starHover;
   if (hover) {
     btn.style.setProperty('--acb-star-hover-bg', hover.background);
@@ -332,7 +340,8 @@ function matchSiteButton(btn, bar) {
   btn.style.setProperty('--acb-star-color', getComputedStyle(like).color);
   btn.style.setProperty('--acb-star-radius', getComputedStyle(like).borderRadius);
   btn.dataset.matched = '1';
-  btn.classList.add('acb-matched');
+  // Always visible like the site's buttons, unless the site only shows them on hover (starOnHover).
+  if (!acb.adapter.starOnHover) btn.classList.add('acb-matched');
 }
 
 const stars = new WeakMap(); // answer element → its ☆ button (it may live outside the answer)

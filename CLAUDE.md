@@ -62,7 +62,7 @@ background.js loads common.js with `importScripts`. library.html loads it with a
 - All writes go through common.js, one at a time (a write queue), so quick saves don't overwrite each other
 
 ## Adapter rules
-- Each site: { name, hosts, convPattern, userSelectors[], aiSelectors[], actionsSelectors[]?, textSelectors[]?, skipSelectors[]?, titleSuffix?, msgId?, isBusy?, starBefore?, starLike?, starIcon?, starHover?, highlightSelectors[]?, tip? }
+- Each site: { name, hosts, convPattern, userSelectors[], aiSelectors[], actionsSelectors[]?, textSelectors[]?, skipSelectors[]?, titleSuffix?, msgId?, isBusy?, starBefore?, starLike?, starIcon?, starHover?, starOnHover?, highlightSelectors[]?, tip? }
   (isBusy(el) = answer is still being written, so no ☆ yet)
   (actionsSelectors = the site's own button row under an answer; ☆ goes there, and its text is never part of the answer)
   (starBefore = the button in that row the ☆ goes in front of; starLike = the button whose size
@@ -70,6 +70,8 @@ background.js loads common.js with `importScripts`. library.html loads it with a
   (starIcon = { size, stroke }: draw the ☆ at this size / line width instead of starLike's icon size,
    for sites whose icons fill their box differently)
   (starHover = { background, color }: the site's own button look on hover, copied by the ☆)
+  (starOnHover = true: a ☆ that copies starLike still only shows on hover for older answers, like
+   the site's buttons; otherwise a starLike ☆ is always visible)
   (highlightSelectors = the part of a message the jump lights up, e.g. the question's bubble; default: all of it)
   (tip = { side: 'above' | 'below', gap, style }: the ☆ tooltip copies the site's own tooltips, measured from them)
 - Several backup selectors per site, tried in order
@@ -129,9 +131,6 @@ Build order. One step at a time; Claude is the first site.
       - highlight search matches in the results
       - relative dates ("2 h ago", full date on hover), "/" focuses search, long questions cut to 2 lines
         (click for all), Copy as plain text or Markdown
-      - Claude's ☆ looks smaller than Claude's own icons (it uses the default 24 px box / 16 px star):
-        measure Claude's buttons (box, icon size, drawn size via getBBox), then match with starIcon.
-        Keep Claude's ☆ on hover for older answers (starLike would make it always visible)
 - [ ] 15. Final check on every site, fix what fails (no new features). Not yet confirmed by the user:
       ☆ tooltip matches each site's own; Gemini saved text (no "You said", readable maths); Gemini bubble
       glow after a jump; ☆ only after a new answer finishes (Gemini); ChatGPT "Email" card text when saved;

@@ -21,6 +21,12 @@ const ADAPTERS = [
     // The parts of an answer that are the written reply (not tool/skill steps). If none
     // are found, the whole answer is used.
     textSelectors: ['[data-cds="Prose"]', '[data-perf-reply-text]'],
+    // ☆ copies Copy's colour and corners. Claude draws its icons in a way that can't be measured,
+    // on a 16 px slot that they fill almost fully, so the star is drawn bigger. starOnHover:
+    // Claude only shows older answers' buttons on hover, so the ☆ does too.
+    starLike: 'button[aria-label="Copy"]',
+    starIcon: { size: 19, stroke: 1.6 },
+    starOnHover: true,
     // Hidden page text that is not part of the answer ("Claude responded: …" for screen readers).
     skipSelectors: ['[data-find-omitted]', '.sr-only'],
     // The site's name at the end of the tab title ("Exam prep - Claude"), removed when saving.
