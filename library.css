@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light dark; /* Chrome's own controls (dropdown lists, checkboxes) follow the theme */
   --bg: #f7f7f5;
   --panel: #ffffff;
   --side: #efeee9;
@@ -58,6 +59,12 @@ select {
 button:hover,
 select:hover {
   background: var(--hover);
+}
+
+/* The opened list of a dropdown: always readable, whatever the system theme */
+option {
+  background: var(--panel);
+  color: var(--text);
 }
 
 button.danger {
@@ -289,6 +296,53 @@ h1 {
 
 .item.deleted {
   opacity: 0.85;
+}
+
+.item.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.tick {
+  margin: 0 2px 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ---------- Selection bar ---------- */
+
+.selection-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+}
+
+.selection-bar[hidden] {
+  display: none;
+}
+
+.selection-bar label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.selection-bar input {
+  accent-color: var(--accent);
+}
+
+.selection-bar .spacer {
+  flex: 1;
 }
 
 .item-actions {

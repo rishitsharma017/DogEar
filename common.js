@@ -200,12 +200,27 @@ function setItemPos(itemId, pos) {
 
 // Moves the item to trash. Returns the trash entry (or null).
 function deleteItem(itemId) {
+  return deleteItems([itemId]).then(entries => entries[0] || null);
+}
+
+// Several items in one write. Each gets its own trash entry so each can be restored.
+function deleteItems(itemIds) {
+  const ids = new Set(itemIds);
   return update(data => {
-    const item = data.items.find(it => it.id === itemId);
-    if (!item) return null;
-    data.items = data.items.filter(it => it.id !== itemId);
-    const project = data.projects.find(p => p.id === item.projectId);
-    return addToTrash(data, 'item', project, [item]);
+    const removed = data.items.filter(it => ids.has(it.id));
+    data.items = data.items.filter(it => !ids.has(it.id));
+    return removed.map(item => {
+      const project = data.projects.find(p => p.id === item.projectId);
+      return addToTrash(data, 'item', project, [item]);
+    });
+  });
+}
+
+function moveItems(itemIds, projectId) {
+  const ids = new Set(itemIds);
+  return update(data => {
+    for (const item of data.items) if (ids.has(item.id)) item.projectId = projectId;
+    data.lastProjectId = projectId;
   });
 }
 

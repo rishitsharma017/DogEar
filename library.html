@@ -32,6 +32,15 @@
     <div id="toolbar" class="toolbar">
       <input id="search" type="search" placeholder="Search saved answers…" autocomplete="off">
       <select id="ai-filter"></select>
+      <button id="select-mode" title="Tick several answers to move or delete them together">Select</button>
+    </div>
+
+    <div id="selection-bar" class="selection-bar" hidden>
+      <label><input id="select-all" type="checkbox"> <span id="selected-count"></span></label>
+      <span class="spacer"></span>
+      <select id="bulk-move" title="Move the selected answers"></select>
+      <button id="bulk-delete" class="danger">Delete</button>
+      <button id="bulk-done">Done</button>
     </div>
 
     <div id="list"></div>

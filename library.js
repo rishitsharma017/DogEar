@@ -14,7 +14,10 @@ const state = {
   view: 'all',        // 'all', 'trash' or a projectId
   search: '',
   ai: '',             // '' = every AI
-  expanded: new Set() // ids of items showing their full text
+  expanded: new Set(), // ids of items showing their full text
+  selecting: false,    // checkboxes shown (after clicking "Select")
+  selected: new Set(), // ids of ticked items
+  shownIds: []         // ids of the items in the list right now (for "select all")
 };
 let renaming = false; // don't redraw while the rename box is open
 
@@ -37,7 +40,11 @@ async function render() {
   $('trash-actions').hidden = !inTrash || !trash.length;
   $('trash-note').hidden = !inTrash;
   $('toolbar').hidden = inTrash;
-  if (inTrash) return renderTrash(trash);
+  if (inTrash) {
+    stopSelecting();
+    $('selection-bar').hidden = true;
+    return renderTrash(trash);
+  }
 
   $('title').textContent = project ? project.name : 'All saved';
 
@@ -52,6 +59,14 @@ async function render() {
     ? `${shown.length} of ${inView.length}`
     : `${inView.length} item${inView.length === 1 ? '' : 's'}`;
 
+  // Checkboxes only after clicking "Select" (the user's choice: no clutter otherwise).
+  // Ticked items no longer in the list (moved, deleted, filtered out) drop out.
+  const selectable = state.selecting;
+  state.shownIds = selectable ? shown.map(it => it.id) : [];
+  const shownSet = new Set(state.shownIds);
+  for (const id of state.selected) if (!shownSet.has(id)) state.selected.delete(id);
+  renderSelectionBar(projects);
+
   const list = $('list');
   list.replaceChildren();
   if (!shown.length) {
@@ -59,7 +74,9 @@ async function render() {
     return;
   }
   const names = new Map(projects.map(p => [p.id, p.name]));
-  for (const item of shown) list.append(itemCard(item, projects, project ? null : names.get(item.projectId)));
+  for (const item of shown) {
+    list.append(itemCard(item, projects, project ? null : names.get(item.projectId), selectable));
+  }
 }
 
 function emptyText(total, filtered) {
@@ -145,6 +162,7 @@ function navRow(view, name, count) {
   row.append(h('span', 'nav-name', name), h('span', 'nav-count', String(count)));
   row.title = name;
   row.addEventListener('click', () => {
+    if (state.view !== view) stopSelecting();
     state.view = view;
     render();
   });
@@ -160,10 +178,24 @@ function renderAiFilter(items) {
   select.value = state.ai;
 }
 
-function itemCard(item, projects, projectName) {
+function itemCard(item, projects, projectName, selectable) {
   const card = h('article', 'item');
+  card.classList.toggle('selected', state.selected.has(item.id));
 
   const meta = h('div', 'meta');
+  if (selectable) {
+    const tick = h('input', 'tick');
+    tick.type = 'checkbox';
+    tick.title = 'Select (to move or delete several at once)';
+    tick.checked = state.selected.has(item.id);
+    tick.addEventListener('change', () => {
+      if (tick.checked) state.selected.add(item.id);
+      else state.selected.delete(item.id);
+      card.classList.toggle('selected', tick.checked);
+      renderSelectionBar();
+    });
+    meta.append(tick);
+  }
   if (item.ai) meta.append(h('span', 'ai', item.ai));
   const details = [item.chatTitle, projectName, new Date(item.createdAt).toLocaleDateString()].filter(Boolean);
   meta.append(h('span', 'details', details.join(' · ')));
@@ -209,11 +241,13 @@ function itemCard(item, projects, projectName) {
 
   const move = h('select', 'move');
   move.title = 'Move to another project';
-  for (const p of [...projects].sort((a, b) => a.name.localeCompare(b.name))) {
-    move.append(new Option(p.name, p.id));
-  }
+  fillProjectMenu(move, projects);
   move.value = item.projectId;
-  move.addEventListener('change', () => moveItem(item.id, move.value));
+  move.addEventListener('change', async () => {
+    const projectId = await pickedProject(move.value);
+    if (projectId) moveItem(item.id, projectId);
+    else move.value = item.projectId;
+  });
   actions.append(move);
 
   const del = h('button', 'danger', 'Delete');
@@ -226,6 +260,83 @@ function itemCard(item, projects, projectName) {
 
   card.append(actions);
   return card;
+}
+
+// ---------- Move menus ----------
+
+const NEW_PROJECT = '__new__';
+
+// Projects A–Z, then "+ New project…". placeholder = a first, non-project line.
+function fillProjectMenu(select, projects, placeholder) {
+  const sorted = [...projects].sort((a, b) => a.name.localeCompare(b.name));
+  select.replaceChildren(
+    ...(placeholder ? [new Option(placeholder, '')] : []),
+    ...sorted.map(p => new Option(p.name, p.id)),
+    new Option('+ New project…', NEW_PROJECT)
+  );
+}
+
+// The project chosen in a move menu: an existing one, or a new one named by the user.
+// Returns null when cancelled.
+async function pickedProject(value) {
+  if (value !== NEW_PROJECT) return value || null;
+  const name = prompt('Name of the new project:');
+  if (!name || !normalize(name)) return null;
+  const project = await addProject(name); // same name as an existing project → that one
+  return project.id;
+}
+
+// ---------- Selecting several ----------
+
+// The bar above the list while selecting: count, select all, move, delete, done.
+// projects is passed on a full redraw; ticking a box only updates the count.
+function renderSelectionBar(projects) {
+  const n = state.selected.size;
+  $('selection-bar').hidden = !state.selecting;
+  $('select-mode').hidden = state.selecting;
+  $('selected-count').textContent = n ? `${n} selected` : 'Tick the answers to move or delete';
+  $('bulk-move').disabled = $('bulk-delete').disabled = !n;
+  const all = $('select-all');
+  all.checked = n > 0 && n === state.shownIds.length;
+  all.indeterminate = n > 0 && n < state.shownIds.length;
+  all.title = all.checked ? 'Unselect all' : `Select all ${state.shownIds.length}`;
+  if (projects) fillProjectMenu($('bulk-move'), projects, 'Move to…');
+}
+
+function startSelecting() {
+  state.selecting = true;
+  render();
+}
+
+function stopSelecting() {
+  state.selecting = false;
+  state.selected.clear();
+}
+
+async function moveSelected() {
+  const select = $('bulk-move');
+  const projectId = await pickedProject(select.value);
+  select.value = '';
+  if (!projectId) return;
+  const ids = [...state.selected];
+  state.selected.clear();
+  await moveItems(ids, projectId);
+}
+
+async function deleteSelected() {
+  const ids = [...state.selected];
+  state.selected.clear();
+  const entries = await deleteItems(ids);
+  if (!entries.length) return;
+  const n = entries.length;
+  showUndo(`Moved ${n} item${n === 1 ? '' : 's'} to Recently deleted.`, async () => {
+    for (const entry of entries) await restoreFromTrash(entry.id);
+  });
+}
+
+function setAllSelected(on) {
+  state.selected = new Set(on ? state.shownIds : []);
+  render();
 }
 
 // ---------- Actions ----------
@@ -329,6 +440,14 @@ $('ai-filter').addEventListener('change', e => {
 $('rename').addEventListener('click', startRename);
 $('export').addEventListener('click', exportProject);
 $('delete').addEventListener('click', removeProject);
+$('select-all').addEventListener('change', e => setAllSelected(e.target.checked));
+$('bulk-move').addEventListener('change', moveSelected);
+$('bulk-delete').addEventListener('click', deleteSelected);
+$('bulk-done').addEventListener('click', () => {
+  stopSelecting();
+  render();
+});
+$('select-mode').addEventListener('click', startSelecting);
 $('empty-trash').addEventListener('click', () => {
   if (confirm('Delete everything in Recently deleted forever? This can’t be undone.')) emptyTrash();
 });

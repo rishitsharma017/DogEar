@@ -22,6 +22,9 @@ Two use cases. Every decision should serve these:
      removes the project and its items, then shows an "Undo" bar for 8 s
    - "Recently deleted" (asked for by the user): deleted projects and items (also ★ → remove)
      go to trash for 30 days; Restore or Delete forever
+   - Select several (asked for by the user): a "Select" button shows checkboxes (hidden otherwise),
+     tick items → move or delete them together; "Done" hides them again.
+     Every Move menu has "+ New project…". Projects stay flat (no folders inside folders)
 5. Right-click selected text on any site → save to "Inbox" (user's choice: keeps web clips apart
    from chat projects; doesn't change the ☆ picker's last-used project), ✓ badge on the icon for 2 s
 
