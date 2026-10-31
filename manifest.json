@@ -3,7 +3,7 @@
   "name": "AI Chat Bookmarks",
   "version": "0.1.0",
   "description": "Bookmark answers in AI chats, jump back to them, and collect them into project folders.",
-  "permissions": ["storage", "unlimitedStorage", "contextMenus"],
+  "permissions": ["storage", "unlimitedStorage", "contextMenus", "activeTab", "scripting"],
   "background": {
     "service_worker": "background.js"
   },

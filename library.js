@@ -191,8 +191,9 @@ function itemCard(item, projects, projectName) {
   actions.append(more, h('span', 'spacer'));
 
   if (item.url) {
-    const go = h('button', '', 'Open chat');
-    go.title = 'Open the chat and jump to this answer';
+    // Right-click saves have no convId: just open the page they came from.
+    const go = h('button', '', item.convId ? 'Open chat' : 'Open page');
+    go.title = item.convId ? 'Open the chat and jump to this answer' : 'Open the page this was saved from';
     go.addEventListener('click', () => openInChat(item));
     actions.append(go);
   }

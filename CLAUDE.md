@@ -22,7 +22,8 @@ Two use cases. Every decision should serve these:
      removes the project and its items, then shows an "Undo" bar for 8 s
    - "Recently deleted" (asked for by the user): deleted projects and items (also ★ → remove)
      go to trash for 30 days; Restore or Delete forever
-5. Right-click selected text on any site → save to last-used project (or "Inbox"), ✓ badge on the icon for 2 s
+5. Right-click selected text on any site → save to "Inbox" (user's choice: keeps web clips apart
+   from chat projects; doesn't change the ☆ picker's last-used project), ✓ badge on the icon for 2 s
 
 ## File structure (keep it exactly like this)
 - manifest.json
@@ -99,7 +100,7 @@ Build order. One step at a time; Claude is the first site.
 - [x] 6. Panel (Alt+B): this chat's items, browse a project
 - [x] 7. Jump to message: same chat, long chats (scroll up + retry), other chats (pendingJump)
 - [x] 8. Library page: projects (rename, delete + undo), search, AI filter, move, copy, delete, export .md
-- [ ] 9. Right-click save on any site
+- [x] 9. Right-click save on any site
 - [ ] 10. ChatGPT adapter
 - [ ] 11. Gemini adapter
 - [ ] 12. Perplexity adapter

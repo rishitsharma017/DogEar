@@ -154,7 +154,8 @@ function emptyTrash() {
 // fields: { projectId, ai, text, plain?, question, chatTitle, url, convId, msgId, pos? }
 // pos = where the answer sat in the chat (0 = top, 1 = bottom), a hint for jumping back.
 // plain = the answer as plain page text; hash/prefix come from it so the page can find it again.
-function addItem(fields) {
+// remember = make this the last-used project (the ☆ picker's default). Right-click saves don't.
+function addItem(fields, { remember = true } = {}) {
   const source = fields.plain != null ? fields.plain : fields.text;
   if (!fields.projectId) return Promise.reject(new Error('addItem needs a projectId'));
   return update(data => {
@@ -174,7 +175,7 @@ function addItem(fields) {
       createdAt: Date.now()
     };
     data.items.push(item);
-    data.lastProjectId = item.projectId;
+    if (remember) data.lastProjectId = item.projectId;
     return item;
   });
 }
