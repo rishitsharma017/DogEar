@@ -265,7 +265,12 @@ function placeStar(btn, el) {
   if (bar) {
     let turn = bar;
     while (turn && !turn.contains(el)) turn = turn.parentElement;
-    if (turn && !turn.classList.contains('acb-turn')) turn.classList.add('acb-turn');
+    if (turn && !turn.classList.contains('acb-turn')) {
+      turn.classList.add('acb-turn');
+      // Fading out after the mouse leaves: check then whether the row hides itself.
+      turn.addEventListener('mouseleave', () => setTimeout(() => findFadingRow(btn, turn), 400));
+    }
+    findFadingRow(btn, turn);
     matchSiteButton(btn, bar);
     // Before the button the site wants it in front of (starBefore), else after the last one.
     // That button may be wrapped in a few boxes (Gemini): go in front of the row's own
@@ -289,6 +294,19 @@ function placeStar(btn, el) {
   }
 }
 
+// Some sites (Perplexity) fade out the whole button row of older answers until you hover,
+// which would hide a saved ★ too. Find that row box (see-through while the answer isn't
+// hovered) and mark it acb-fading: CSS then keeps it shown but hides everything in it except
+// the ☆. Only measurable while not hovering, so also checked after the mouse leaves.
+function findFadingRow(btn, turn) {
+  if (!turn || turn.matches(':hover') || turn.querySelector('.acb-fading')) return;
+  let top = null;
+  for (let box = btn.parentElement; box && box !== turn; box = box.parentElement) {
+    if (Number(getComputedStyle(box).opacity) < 0.5) top = box;
+  }
+  if (top) top.classList.add('acb-fading');
+}
+
 // Sites whose adapter names a starLike button: make the ☆ the same size and colour as it,
 // and always visible like it (acb-matched), so it looks like one of the site's own buttons.
 // Set once per star.
@@ -301,7 +319,14 @@ function matchSiteButton(btn, bar) {
   if (!like || !like.offsetWidth || !icon) return;
   const size = icon.getBoundingClientRect();
   btn.style.setProperty('--acb-star-box', `${like.offsetWidth}px`);
-  btn.style.setProperty('--acb-star-icon', `${Math.round(size.width)}px`);
+  const own = acb.adapter.starIcon;
+  btn.style.setProperty('--acb-star-icon', `${own ? own.size : Math.round(size.width)}px`);
+  if (own && own.stroke) btn.style.setProperty('--acb-star-stroke', own.stroke);
+  const hover = acb.adapter.starHover;
+  if (hover) {
+    btn.style.setProperty('--acb-star-hover-bg', hover.background);
+    btn.style.setProperty('--acb-star-hover-color', hover.color);
+  }
   btn.style.setProperty('--acb-star-color', getComputedStyle(like).color);
   btn.style.setProperty('--acb-star-radius', getComputedStyle(like).borderRadius);
   btn.dataset.matched = '1';

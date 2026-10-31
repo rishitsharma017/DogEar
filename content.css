@@ -24,7 +24,7 @@
   height: var(--acb-star-icon, 16px);
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.9;
+  stroke-width: var(--acb-star-stroke, 1.9);
   stroke-linejoin: round;
 }
 
@@ -44,6 +44,25 @@
 .acb-star.acb-open,
 .acb-star.acb-saved {
   opacity: 1;
+}
+
+/* A row that fades out until you hover (see findFadingRow): stays shown, but only a saved ★
+   in it is visible; on hover the whole row is back as the site made it. */
+.acb-fading {
+  opacity: 1 !important;
+  visibility: hidden;
+}
+.acb-turn:hover .acb-fading {
+  visibility: visible;
+}
+.acb-fading .acb-star.acb-saved {
+  visibility: visible;
+  pointer-events: auto;
+}
+/* Shown on its own, the ★ moves to the start of the row instead of floating after the
+   hidden buttons; on hover it's back in its place. */
+.acb-turn:not(:hover) .acb-fading .acb-star.acb-saved {
+  order: -1;
 }
 
 /* ---------- Save picker ---------- */
@@ -157,7 +176,9 @@
 
 .acb-star:hover,
 .acb-star.acb-open {
-  background: rgba(127, 127, 127, 0.15);
+  /* The site's own hover look where the adapter gives one (starHover). */
+  background: var(--acb-star-hover-bg, rgba(127, 127, 127, 0.15));
+  color: var(--acb-star-hover-color, var(--acb-star-color, #8a8a8a));
 }
 
 .acb-star:focus-visible {

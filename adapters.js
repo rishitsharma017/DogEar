@@ -131,6 +131,61 @@ const ADAPTERS = [
         padding: '8px 16px', borderRadius: '12px', border: 'none', boxShadow: 'none'
       }
     }
+  },
+  {
+    name: 'Perplexity',
+    hosts: ['perplexity.ai'],
+    convPattern: /\/search\/([^/?#]+)/,
+    // The question's bubble; its whole box as a backup.
+    userSelectors: ['[data-message-bubble]', '[data-workflow-entry]'],
+    aiSelectors: ['[data-workflow-final-text]'],
+    // The left group under an answer: Copy, Share, Helpful / Not helpful, Fork, sources.
+    actionsSelectors: ['[data-workflow-text-footer] > div:first-child'],
+    // ☆ goes just before the sources button (the only button there without a label),
+    // and copies the look of Copy.
+    starBefore: 'button:not([aria-label]):not(.acb-ui)',
+    starLike: 'button[aria-label="Copy"]',
+    // Perplexity's icons (Tabler) fill 12 of their 16 px with thin lines; a star looks smaller
+    // than a square icon of the same width, so it's drawn a bit bigger with thinner lines.
+    starIcon: { size: 18, stroke: 1.6 },
+    // Perplexity's buttons on hover: a faint light circle and a brighter icon.
+    starHover: { background: 'rgba(219, 222, 227, 0.06)', color: 'rgb(219, 222, 227)' },
+    // The written answer, not the "Finished 4s" step above it.
+    textSelectors: ['[data-renderer="lm"]'],
+    // Source pills inside the text ("wikipedia +2").
+    skipSelectors: ['[data-pplx-citation]'],
+    titleSuffix: /\s+[-–|]\s+Perplexity$/,
+    // Perplexity numbers each question (data-workflow-entry = 0, 1, 2…), and the answer sits
+    // in the box right after it. Messages far off screen are emptied but keep their box, so
+    // count from any question still on the page.
+    msgId: el => {
+      const slot = el.parentElement && el.parentElement.parentElement;
+      const list = slot && slot.parentElement;
+      if (!list) return '';
+      const slots = [...list.children];
+      const i = slots.indexOf(slot);
+      for (let j = 0; j < slots.length; j++) {
+        const q = slots[j].querySelector('[data-workflow-entry]');
+        if (!q || (i - 1 - j) % 2 !== 0) continue;
+        const n = Number(q.getAttribute('data-workflow-entry')) + (i - 1 - j) / 2;
+        return Number.isInteger(n) && n >= 0 ? `entry-${n}` : '';
+      }
+      return '';
+    },
+    // The button row only appears once the answer has finished.
+    isBusy: el => !el.querySelector('[data-workflow-text-footer] button'),
+    highlightSelectors: ['[data-message-bubble]'],
+    // Measured from Perplexity's own "Copy" tooltip.
+    tip: {
+      side: 'above', gap: 8,
+      style: {
+        background: 'rgb(21, 23, 27)', color: 'rgb(255, 255, 255)',
+        font: '470 12px/16px pplxSans, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
+        letterSpacing: 'normal', padding: '6px 8px', borderRadius: '8px', border: 'none',
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.05), ' +
+          '0 1px 2px rgba(0, 0, 0, 0.24), 0 0 2px rgba(0, 0, 0, 0.19), 0 1px 4px -1px rgba(0, 0, 0, 0.14)'
+      }
+    }
   }
 ];
 
