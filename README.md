@@ -16,10 +16,12 @@ folders, so one research topic can collect answers from several AIs.
 - **Jump back.** Click a saved answer in the panel. The chat scrolls to it and highlights the
   question that was asked, even when the chat is long or it's a different chat.
 - **Saves the text itself**, not just a link, so saved answers survive if the chat is deleted.
+- **Library page** (click the toolbar icon): all your projects, search, filter by AI, copy,
+  move, rename, export a project as Markdown, and **Recently deleted** to restore anything
+  deleted in the last 30 days.
 
 ## Planned
 
-- Library page: all projects, search, filter by AI, move, copy, delete, export a project as Markdown
 - Right-click "Save selection" on any website
 - ChatGPT, Gemini and Perplexity support
 
@@ -50,7 +52,7 @@ Plain JavaScript, Manifest V3, no frameworks and no build step.
 | `common.js` | All storage reads and writes, plus Markdown export |
 | `background.js` | Toolbar icon, right-click menu, Alt+B command |
 | `content.css` | Styles, all prefixed `acb-` so they never clash with the site |
-| `library.*` | The Library page (in progress) |
+| `library.*` | The Library page |
 
 Adding a new AI site mostly means adding an adapter to `adapters.js`.
 
