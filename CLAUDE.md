@@ -4,7 +4,7 @@
 Chrome extension (Manifest V3) that saves answers from AI chats into user-made
 project folders. One project can hold answers from multiple AIs.
 Supported sites: ChatGPT (chatgpt.com), Claude (claude.ai), Gemini (gemini.google.com),
-Perplexity (perplexity.ai, www.perplexity.ai). Any other site: right-click "Save selection".
+Perplexity (perplexity.ai, www.perplexity.ai), Grok (grok.com). Any other site: right-click "Save selection".
 
 Two use cases. Every decision should serve these:
 1. Bookmark inside a long chat: in a 400-message chat, star message 78 and jump
@@ -114,10 +114,12 @@ Build order. One step at a time; Claude is the first site.
 - [x] 10. ChatGPT adapter
 - [ ] 11. Gemini adapter
 - [ ] 12. Perplexity adapter
-- [ ] 13. UI polish: ☆ next to each site's own buttons (copy/retry) so it looks built-in; tidy picker, panel, library
-- [ ] 14. Final check on every site, fix what fails (no new features)
+- [ ] 13. Grok adapter (grok.com; added by the user)
+- [ ] 14. UI polish: ☆ next to each site's own buttons (copy/retry) so it looks built-in; tidy picker, panel,
+      library; more visual work (the user wants it to look much better)
+- [ ] 15. Final check on every site, fix what fails (no new features)
 
-## Later ideas (v2, only after step 14)
+## Later ideas (v2, only after step 15)
 In order. Not part of v1, don't build early.
 1. Backup / restore: download all data as one file, load it back (data only lives in Chrome)
 2. "Copy project as prompt": a project as one message to paste into any AI to continue the research
