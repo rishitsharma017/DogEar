@@ -186,6 +186,54 @@ const ADAPTERS = [
           '0 1px 2px rgba(0, 0, 0, 0.24), 0 0 2px rgba(0, 0, 0, 0.19), 0 1px 4px -1px rgba(0, 0, 0, 0.14)'
       }
     }
+  },
+  {
+    name: 'Grok',
+    hosts: ['grok.com'],
+    convPattern: /\/c\/([0-9a-f-]{36})/i,
+    userSelectors: ['[data-testid="user-message"]'],
+    aiSelectors: ['[data-testid="assistant-message"]'],
+    // The buttons under an answer (Copy, Share, Like, Dislike, Regenerate, More) sit in a box
+    // inside the row's button group, next to the answer rather than inside it.
+    actionsSelectors: [
+      '[role="group"][aria-labelledby^="turn-heading-"] span:has(> button)',
+      '[role="group"][aria-labelledby^="turn-heading-"]'
+    ],
+    // ☆ goes just before "…" (More actions), and copies the look of Like.
+    starBefore: 'button[aria-label="More actions"]',
+    starLike: 'button[aria-label="Like"]',
+    // Grok's icons fill 12–13 of their 16 px; a star looks smaller than other icons of the same
+    // width, so it's drawn a bit bigger with thinner lines.
+    starIcon: { size: 18, stroke: 1.6 },
+    // Grok's buttons on hover: a light circle and a white icon.
+    starHover: { background: 'rgba(252, 252, 252, 0.1)', color: 'rgb(252, 252, 252)' },
+    // Hand-named class (not generated) around the written answer.
+    textSelectors: ['.response-content-markdown'],
+    // "Grok" / "You" for screen readers, and the screen-reader copy of maths (KaTeX draws
+    // every formula twice).
+    skipSelectors: ['[data-no-copy]', '.sr-only', '.katex-mathml'],
+    titleSuffix: /\s+[-–|]\s+Grok$/,
+    // Grok's own id for each message, in the box around it ("response-<id>").
+    msgId: el => {
+      const box = el.closest('[id^="response-"]');
+      return box ? box.id.slice('response-'.length) : '';
+    },
+    // The buttons only appear once the answer has finished.
+    isBusy: el => {
+      const box = el.closest('[id^="response-"]');
+      return !!box && !box.querySelector('[role="group"] button');
+    },
+    // Measured from Grok's own "Like" tooltip.
+    tip: {
+      side: 'below', gap: 6,
+      style: {
+        background: 'rgb(35, 33, 31)', color: 'rgb(252, 252, 252)',
+        font: '400 13px/16px universalSans, Inter, Roboto, "Open Sans", Arial, sans-serif',
+        letterSpacing: '-0.2px', padding: '6px 10px', borderRadius: '8px', border: 'none',
+        boxShadow: 'inset 0 0 0 0.5px rgba(252, 252, 252, 0.06), 0 1px 2px rgba(0, 0, 0, 0.3), ' +
+          '0 2px 5px -2px rgba(0, 0, 0, 0.25)'
+      }
+    }
   }
 ];
 

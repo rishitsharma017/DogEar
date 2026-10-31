@@ -33,7 +33,8 @@
         "https://claude.ai/*",
         "https://gemini.google.com/*",
         "https://perplexity.ai/*",
-        "https://www.perplexity.ai/*"
+        "https://www.perplexity.ai/*",
+        "https://grok.com/*"
       ],
       "js": ["common.js", "adapters.js", "content.js"],
       "css": ["content.css"],

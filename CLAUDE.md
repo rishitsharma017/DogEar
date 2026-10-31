@@ -118,7 +118,8 @@ Build order. One step at a time; Claude is the first site.
 - [x] 10. ChatGPT adapter
 - [x] 11. Gemini adapter
 - [x] 12. Perplexity adapter
-- [ ] 13. Grok adapter (grok.com; added by the user)
+- [x] 13. Grok adapter (grok.com; added by the user). Grok on x.com (x.com/i/grok): the user uses it too,
+      put off for later by the user
 - [ ] 14. UI polish: ☆ next to each site's own buttons (copy/retry) so it looks built-in; tidy picker, panel,
       library; more visual work (the user wants it to look much better). Library list (user's picks):
       - show saved Markdown formatted (bold, lists, code boxes, dividers), built with DOM calls, no innerHTML
@@ -128,11 +129,15 @@ Build order. One step at a time; Claude is the first site.
       - highlight search matches in the results
       - relative dates ("2 h ago", full date on hover), "/" focuses search, long questions cut to 2 lines
         (click for all), Copy as plain text or Markdown
+      - Claude's ☆ looks smaller than Claude's own icons (it uses the default 24 px box / 16 px star):
+        measure Claude's buttons (box, icon size, drawn size via getBBox), then match with starIcon.
+        Keep Claude's ☆ on hover for older answers (starLike would make it always visible)
 - [ ] 15. Final check on every site, fix what fails (no new features). Not yet confirmed by the user:
       ☆ tooltip matches each site's own; Gemini saved text (no "You said", readable maths); Gemini bubble
       glow after a jump; ☆ only after a new answer finishes (Gemini); ChatGPT "Email" card text when saved;
       the spinner ring turning; tooltips/colours in light mode (measured in dark mode only);
-      Perplexity: ☆ only after a new answer finishes (not tested: free question limit was used up)
+      Perplexity: ☆ only after a new answer finishes (not tested: free question limit was used up);
+      Grok: ☆ only after a new answer finishes (isBusy guessed: answer writing was never recorded)
 
 ## Later ideas (v2, only after step 15)
 In order. Not part of v1, don't build early.

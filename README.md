@@ -5,9 +5,9 @@ back to it later, even in a chat with hundreds of messages. Saved answers go int
 folders, so one research topic can collect answers from several AIs.
 
 > **Work in progress.** It currently works on **Claude (claude.ai)**, **ChatGPT (chatgpt.com)**,
-> **Gemini (gemini.google.com)** and **Perplexity (perplexity.ai)**. Grok is planned next.
+> **Gemini (gemini.google.com)**, **Perplexity (perplexity.ai)** and **Grok (grok.com)**.
 
-## What works now (Claude, ChatGPT, Gemini and Perplexity)
+## What works now (Claude, ChatGPT, Gemini, Perplexity and Grok)
 
 - **☆ on every answer.** Click it, pick a project or type a new one, and the answer is saved (☆ turns ★).
 - **★ to change it.** Move the answer to another project, or remove it.
@@ -23,7 +23,8 @@ folders, so one research topic can collect answers from several AIs.
 
 ## Planned
 
-- Grok support
+- Grok on x.com
+- A more polished look for the picker, panel and Library
 
 ## Install (developer mode)
 
@@ -34,8 +35,8 @@ The extension isn't in the Chrome Web Store yet. To try it:
 3. Turn on **Developer mode** (top right).
 4. Click **Load unpacked** and choose the unzipped folder.
 5. Open a chat on [claude.ai](https://claude.ai), [chatgpt.com](https://chatgpt.com),
-   [gemini.google.com](https://gemini.google.com) or [perplexity.ai](https://www.perplexity.ai)
-   and look for the ☆ in the buttons under an answer.
+   [gemini.google.com](https://gemini.google.com), [perplexity.ai](https://www.perplexity.ai) or
+   [grok.com](https://grok.com) and look for the ☆ in the buttons under an answer.
 
 ## Privacy
 

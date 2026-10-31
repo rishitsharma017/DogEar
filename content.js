@@ -317,7 +317,9 @@ function matchSiteButton(btn, bar) {
   // anything with "icon" in its class: that can be an invisible hover circle around it.
   const icon = like && (like.querySelector('svg') || like.querySelector('mat-icon'));
   if (!like || !like.offsetWidth || !icon) return;
-  const size = icon.getBoundingClientRect();
+  // The icon's own size, not its size on screen: some sites (Grok) zoom icons in when the row
+  // appears, and measuring mid-zoom would copy a smaller size.
+  const size = { width: parseFloat(getComputedStyle(icon).width) || icon.getBoundingClientRect().width };
   btn.style.setProperty('--acb-star-box', `${like.offsetWidth}px`);
   const own = acb.adapter.starIcon;
   btn.style.setProperty('--acb-star-icon', `${own ? own.size : Math.round(size.width)}px`);
@@ -399,6 +401,7 @@ function closePicker() {
   if (!picker) return;
   picker.box.remove();
   picker.btn.classList.remove('acb-open');
+  for (const el of picker.raised || []) el.classList.remove('acb-raised');
   document.removeEventListener('mousedown', onOutsideClick, true);
   document.removeEventListener('keydown', onPickerKey, true);
   document.removeEventListener('scroll', onPageScroll, true);
@@ -540,6 +543,18 @@ async function openPicker(btn, el) {
     box.addEventListener(type, e => e.stopPropagation());
   }
   host.append(box);
+  // Some sites (Grok) draw each message as its own floating layer; a later message would then
+  // cover the picker. Lift the layers the picker sits in above the others while it's open, but
+  // only inside the chat's scroll box: above it, a lifted box would cover the site's sidebar.
+  const raised = [];
+  for (let up = host; up && up !== document.body; up = up.parentElement) {
+    const cs = getComputedStyle(up);
+    if (/(auto|scroll)/.test(cs.overflowY)) break;
+    if (cs.position === 'absolute' || cs.transform !== 'none') {
+      up.classList.add('acb-raised');
+      raised.push(up);
+    }
+  }
 
   // Below the star if there's room, otherwise above it.
   const r = btn.getBoundingClientRect();
@@ -555,7 +570,7 @@ async function openPicker(btn, el) {
     box.style.top = `${top + (top - placed.top)}px`;
   }
 
-  picker = { box, btn };
+  picker = { box, btn, raised };
   btn.classList.add('acb-open');
   document.addEventListener('mousedown', onOutsideClick, true);
   document.addEventListener('keydown', onPickerKey, true);
@@ -607,11 +622,29 @@ function bubbleAround(el) {
   return null;
 }
 
+// Gold outline + glow + tint: holds ~2.5 s, then fades. A Web Animation, not a CSS one: some
+// sites (Claude) switch off every CSS animation, which made the glow almost invisible there.
+const flashOn = {
+  outline: '4px solid rgba(245, 179, 1, 1)',
+  boxShadow: '0 0 0 8px rgba(245, 179, 1, 0.28), 0 0 28px 10px rgba(245, 179, 1, 0.45)',
+  backgroundColor: 'rgba(245, 179, 1, 0.26)'
+};
+const flashOff = {
+  outline: '4px solid rgba(245, 179, 1, 0)',
+  boxShadow: '0 0 0 8px rgba(245, 179, 1, 0), 0 0 28px 10px rgba(245, 179, 1, 0)',
+  backgroundColor: 'rgba(245, 179, 1, 0)'
+};
+
 function flash(el) {
-  el.classList.remove('acb-flash');
-  void el.offsetWidth; // restart the animation if it's already running
+  if (el.acbFlash) el.acbFlash.cancel(); // restart if it's already running
   el.classList.add('acb-flash');
-  setTimeout(() => el.classList.remove('acb-flash'), 3700);
+  el.acbFlash = el.animate([
+    { ...flashOn, offset: 0 }, { ...flashOn, offset: 0.7 }, { ...flashOff, offset: 1 }
+  ], { duration: 3600, easing: 'ease-out' });
+  el.acbFlash.onfinish = () => {
+    el.classList.remove('acb-flash');
+    el.acbFlash = null;
+  };
 }
 
 // Small note at the bottom of the screen. ms = 0 → stays until removed.
@@ -640,7 +673,7 @@ async function jumpTo(item, firstTry = true) {
     try {
       answer = await searchFor(item, token);
     } finally {
-      cover.remove();
+      cover.finish(!!answer && token === jumpToken);
     }
     if (token !== jumpToken) return;
     if (!answer) {
@@ -683,7 +716,9 @@ function landedOn(item) {
 }
 
 // While searching, the chat jumps around (the site loads older messages and shifts the
-// page). A dim cover over the chat hides that. Cancel, Esc or the mouse wheel stop the search.
+// page). A dark cover over the chat hides that. Cancel, Esc or the mouse wheel stop the search.
+// It only appears if the search takes longer than a moment (no flash for quick finds).
+// finish(true) plays a short "Found it" burst, then fades out over the message landing.
 function showSearchCover(token) {
   const first = getMessages(acb.adapter)[0];
   const box = first ? scrollBoxOf(first.el) : null;
@@ -696,25 +731,54 @@ function showSearchCover(token) {
   }
   const cancel = h('button', 'acb-cover-cancel', 'Cancel');
   cancel.type = 'button';
-  // Gold ring sweeping around a softly pulsing ★.
-  const spinner = h('span', 'acb-spinner');
-  spinner.append(h('span', 'acb-spinner-ring'), starIcon());
-  const text = h('span', 'acb-cover-text');
-  text.append(h('span', 'acb-cover-title', 'Finding message'),
-    h('span', 'acb-cover-hint', 'Searching the chat · Esc to cancel'));
+  // A thin ring spinner that turns into a check when found, the text, an Esc hint, Cancel,
+  // and a slim progress line along the bottom edge.
+  const spinner = h('span', 'acb-cover-spinner');
+  const check = checkIcon();
+  const status = h('span', 'acb-cover-status');
+  status.append(spinner, check);
+  const title = h('span', 'acb-cover-title', 'Finding message');
+  const key = h('span', 'acb-cover-key', 'Esc');
+  const bar = h('span', 'acb-cover-bar');
+  const progress = h('span', 'acb-cover-progress');
+  progress.append(bar);
   const card = h('div', 'acb-cover-card');
-  card.append(spinner, text, cancel);
+  card.append(status, title, key, cancel, progress);
   cover.append(card);
-  document.body.append(cover);
-  requestAnimationFrame(() => cover.classList.add('acb-show'));
+
+  // The moving parts run as Web Animations, not CSS animations: some sites (Claude) switch off
+  // every CSS animation on the page, which froze the spinner there.
+  let shown = false;
+  const showTimer = setTimeout(() => {
+    shown = true;
+    document.body.append(cover);
+    requestAnimationFrame(() => cover.classList.add('acb-show'));
+    spinner.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }],
+      { duration: 850, iterations: Infinity });
+    bar.animate([{ transform: 'translateX(-100%)' }, { transform: 'translateX(300%)' }],
+      { duration: 1400, iterations: Infinity, easing: 'cubic-bezier(0.45, 0, 0.55, 1)' });
+  }, 150);
 
   let gone = false;
   const remove = () => {
     if (gone) return;
     gone = true;
+    clearTimeout(showTimer);
     document.removeEventListener('keydown', onKey, true);
+    if (!shown) return;
     cover.classList.remove('acb-show');
-    setTimeout(() => cover.remove(), 200);
+    setTimeout(() => cover.remove(), 350);
+  };
+  const finish = found => {
+    if (!found || !shown || gone) return remove();
+    cover.classList.add('acb-found');
+    title.textContent = 'Found';
+    key.remove();
+    cancel.remove();
+    // The check draws itself in one stroke.
+    check.firstChild.animate([{ strokeDashoffset: 16 }, { strokeDashoffset: 0 }],
+      { duration: 260, easing: 'cubic-bezier(0.3, 0, 0.2, 1)', fill: 'forwards' });
+    setTimeout(remove, 450);
   };
   const stop = () => {
     if (jumpToken === token) jumpToken++; // cancels the search
@@ -724,7 +788,19 @@ function showSearchCover(token) {
   cancel.addEventListener('click', stop);
   cover.addEventListener('wheel', stop, { passive: true });
   document.addEventListener('keydown', onKey, true);
-  return { remove };
+  return { remove, finish };
+}
+
+// A small check mark as an SVG (built with DOM calls).
+function checkIcon() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', 'M3.5 8.5l3 3 6-7');
+  svg.append(path);
+  return svg;
 }
 
 // Tracks whether the user scrolls, clicks or types (our own pretend wheel doesn't count).
