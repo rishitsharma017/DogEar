@@ -120,8 +120,8 @@ Build order. One step at a time; Claude is the first site.
 - [x] 10. ChatGPT adapter
 - [x] 11. Gemini adapter
 - [x] 12. Perplexity adapter
-- [x] 13. Grok adapter (grok.com; added by the user). Grok on x.com (x.com/i/grok): the user uses it too,
-      put off for later by the user
+- [x] 13. Grok adapter (grok.com; added by the user). Grok on x.com: tried, then dropped by
+      the user (grok.com is enough)
 - [ ] 14. UI polish: ☆ next to each site's own buttons (copy/retry) so it looks built-in; tidy picker, panel,
       library; more visual work (the user wants it to look much better). Library list (user's picks):
       - show saved Markdown formatted (bold, lists, code boxes, dividers), built with DOM calls, no innerHTML

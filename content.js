@@ -552,14 +552,18 @@ async function openPicker(btn, el) {
     box.addEventListener(type, e => e.stopPropagation());
   }
   host.append(box);
-  // Some sites (Grok) draw each message as its own floating layer; a later message would then
-  // cover the picker. Lift the layers the picker sits in above the others while it's open, but
-  // only inside the chat's scroll box: above it, a lifted box would cover the site's sidebar.
+  // Some sites draw each message as its own layer (Grok: floating rows), so a later
+  // message would cover the picker. Lift the layers the picker sits in above the others while
+  // it's open: from the picker up to its message, never higher (a lifted box above that could
+  // cover the site's sidebar), and never past the chat's scroll box.
+  const messageEls = getMessages(acb.adapter).map(m => m.el);
   const raised = [];
   for (let up = host; up && up !== document.body; up = up.parentElement) {
     const cs = getComputedStyle(up);
     if (/(auto|scroll)/.test(cs.overflowY)) break;
-    if (cs.position === 'absolute' || cs.transform !== 'none') {
+    if (messageEls.filter(m => up.contains(m)).length > 1) break; // holds other messages too
+    const layer = (cs.position !== 'static' && cs.zIndex !== 'auto') || cs.position === 'absolute';
+    if (layer || cs.transform !== 'none') {
       up.classList.add('acb-raised');
       raised.push(up);
     }

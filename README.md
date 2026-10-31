@@ -23,7 +23,6 @@ folders, so one research topic can collect answers from several AIs.
 
 ## Planned
 
-- Grok on x.com
 - A more polished look for the picker, panel and Library
 
 ## Install (developer mode)
