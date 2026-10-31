@@ -237,6 +237,7 @@ async function render() {
   const list = $('list');
   list.replaceChildren();
   if (!shown.length) {
+    renderIndex([]);
     const empty = h('div', 'empty');
     empty.append(h('p', '', emptyText(inView.length, filtered)));
     if (filtered && inView.length) {
@@ -253,11 +254,76 @@ async function render() {
     list.append(empty);
     return;
   }
+  // Grouped under guide words (Today, Yesterday, This week, months), like a dictionary's
+  // sections; the index tabs on the right edge jump between them.
   const names = new Map(projects.map(p => [p.id, p.name]));
+  const groups = [];
   for (const item of shown) {
-    list.append(itemCard(item, projects, project ? null : names.get(item.projectId), selectable));
+    const g = dateGroup(item.createdAt);
+    if (!groups.length || groups[groups.length - 1].key !== g.key) groups.push({ ...g, items: [] });
+    groups[groups.length - 1].items.push(item);
+  }
+  for (const g of groups) {
+    const guide = h('h2', 'guide');
+    guide.id = `g-${g.key}`;
+    const n = g.items.length;
+    guide.append(h('span', '', g.label), h('span', 'guide-count', `${n} answer${n === 1 ? '' : 's'}`));
+    list.append(guide);
+    for (const item of g.items) {
+      list.append(itemCard(item, projects, project ? null : names.get(item.projectId), selectable));
+    }
+  }
+  renderIndex(groups);
+}
+
+// Which guide-word section a date belongs to: Today, Yesterday, This week (the 5 days before),
+// then one per month ("October", or "September 2025" for other years).
+function dateGroup(ms) {
+  const day = d => new Date(d).setHours(0, 0, 0, 0);
+  const days = Math.round((day(Date.now()) - day(ms)) / 86400000);
+  if (days <= 0) return { key: 'today', label: 'Today', tab: 'Today' };
+  if (days === 1) return { key: 'yesterday', label: 'Yesterday', tab: 'Yesterday' };
+  if (days < 7) return { key: 'week', label: 'This week', tab: 'This week' };
+  const date = new Date(ms);
+  const thisYear = date.getFullYear() === new Date().getFullYear();
+  const month = date.toLocaleDateString(undefined, { month: 'long' });
+  const short = date.toLocaleDateString(undefined, { month: 'short' });
+  return {
+    key: `${date.getFullYear()}-${date.getMonth()}`,
+    label: thisYear ? month : `${month} ${date.getFullYear()}`,
+    tab: thisYear ? short : `${short} ’${String(date.getFullYear()).slice(2)}`
+  };
+}
+
+// The thumb index: one half-moon tab per section on the right edge. A tab scrolls to its
+// guide word; the tab of the section you're reading is the gilt one.
+function renderIndex(groups) {
+  const index = $('index');
+  index.replaceChildren();
+  index.hidden = !groups.length;
+  for (const g of groups) {
+    const tab = h('button', 'tab', g.tab);
+    tab.type = 'button';
+    tab.dataset.key = g.key;
+    tab.title = `Jump to ${g.label}`;
+    tab.addEventListener('click', () => {
+      document.getElementById(`g-${g.key}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    index.append(tab);
+  }
+  markIndex();
+}
+
+function markIndex() {
+  const guides = [...document.querySelectorAll('#list .guide')];
+  let current = guides[0];
+  for (const g of guides) if (g.getBoundingClientRect().top <= 140) current = g;
+  for (const tab of document.querySelectorAll('#index .tab')) {
+    tab.classList.toggle('on', !!current && `g-${tab.dataset.key}` === current.id);
   }
 }
+
+addEventListener('scroll', () => requestAnimationFrame(markIndex), { passive: true });
 
 function emptyText(total, filtered) {
   if (filtered && total) return 'Nothing matches your search.';
@@ -281,6 +347,18 @@ function renderSidebar(projects, items, trash) {
   const sorted = [...projects].sort((a, b) => a.name.localeCompare(b.name));
   for (const p of sorted) nav.append(navRow(p.id, p.name, counts.get(p.id) || 0));
 
+  // "+ New project": name it, then open it.
+  const add = h('button', 'nav-new', '+ New project');
+  add.type = 'button';
+  add.addEventListener('click', async () => {
+    const id = await pickedProject(NEW_PROJECT);
+    if (!id) return;
+    stopSelecting();
+    state.view = id;
+    render();
+  });
+  nav.append(add);
+
   const bin = navRow('trash', 'Recently deleted', trash.length);
   bin.classList.add('nav-trash');
   nav.append(bin);
@@ -289,6 +367,7 @@ function renderSidebar(projects, items, trash) {
 // ---------- Recently deleted ----------
 
 function renderTrash(trash) {
+  renderIndex([]);
   $('title').textContent = 'Recently deleted';
   $('count').textContent = `${trash.length} item${trash.length === 1 ? '' : 's'}`;
   const list = $('list');
@@ -306,11 +385,13 @@ function trashCard(entry) {
   const card = h('article', 'item deleted');
   const meta = h('div', 'meta');
   const deleted = when(entry.deletedAt, 'deleted ');
+  const body = h('div', 'body');
 
   if (entry.kind === 'project') {
     const n = entry.items.length;
     meta.append(h('span', 'kind', 'Project'), h('span', 'details', `${n} item${n === 1 ? '' : 's'}`), deleted);
-    card.append(meta, h('div', 'question', entry.project.name));
+    body.append(h('div', 'question', entry.project.name));
+    card.append(meta, body);
   } else {
     const item = entry.items[0];
     meta.append(aiMark(item.ai));
@@ -318,11 +399,11 @@ function trashCard(entry) {
     const details = [from, item.chatTitle].filter(Boolean).join(' · ');
     if (details) meta.append(h('span', 'details', details));
     meta.append(deleted);
-    card.append(meta);
-    if (item.question) card.append(h('div', 'question', item.question));
+    card.append(meta, body);
+    if (item.question) body.append(h('div', 'question', item.question));
     const text = h('div', 'text md short');
     text.append(renderMarkdown(item.text));
-    card.append(text);
+    body.append(text);
     requestAnimationFrame(() => text.classList.toggle('clipped', text.scrollHeight > text.clientHeight + 2));
   }
 
@@ -336,7 +417,7 @@ function trashCard(entry) {
     if (confirm('Delete this forever? This can’t be undone.')) deleteFromTrash(entry.id);
   });
   actions.append(restore, forever);
-  card.append(actions);
+  body.append(actions);
   return card;
 }
 
@@ -420,15 +501,16 @@ function itemCard(item, projects, projectName, selectable) {
   const details = [item.chatTitle, projectName].filter(Boolean).join(' · ');
   if (details) meta.append(h('span', 'details', details));
   meta.append(when(item.createdAt));
-  card.append(meta);
+  const body = h('div', 'body');
+  card.append(meta, body);
 
-  if (item.question) card.append(h('div', 'question', item.question));
+  if (item.question) body.append(h('div', 'question', item.question));
 
   const text = h('div', 'text md');
   text.append(renderMarkdown(item.text));
   const open = state.expanded.has(item.id);
   text.classList.toggle('open', open);
-  card.append(text);
+  body.append(text);
 
   const actions = h('div', 'item-actions');
   // Only offer "Show more" when the text is actually cut off; a cut-off preview fades out.
@@ -498,7 +580,7 @@ function itemCard(item, projects, projectName, selectable) {
     actions.append(go);
   }
 
-  card.append(actions);
+  body.append(actions);
   return card;
 }
 
@@ -697,9 +779,26 @@ $('undo-btn').addEventListener('click', async () => {
   if (action) await action();
 });
 
-// Saves, moves and deletes made anywhere (other tabs, the chat sites) show up right away.
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && (changes.items || changes.projects || changes.trash)) render();
+// Light or dark look: the "Dark mode" switch at the bottom of the sidebar. The page stays
+// hidden until the saved choice is applied (library.css), so it never flashes the other look.
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  $('theme-toggle').setAttribute('aria-checked', String(theme === 'dark'));
+}
+
+$('theme-toggle').addEventListener('click', () => {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  setTheme(next);
 });
 
+// Saves, moves and deletes made anywhere (other tabs, the chat sites) show up right away;
+// so does a theme switched in another Library tab.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local') return;
+  if (changes.theme) applyTheme(changes.theme.newValue === 'dark' ? 'dark' : 'light');
+  if (changes.items || changes.projects || changes.trash) render();
+});
+
+getTheme().then(applyTheme, () => applyTheme('light'));
 render();

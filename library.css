@@ -1,66 +1,124 @@
+/* Library: the "Thumb Index" world. Guide words over date sections, gilt index tabs on the right
+   edge that jump between them. Gilt is rationed: the current tab, the page edge, saved stars and
+   the one primary action in reach. */
+
+/* Two looks, picked with the "Dark mode" switch (library.js: applyTheme):
+   light = the original Thumb Index: white India paper, black ink, dictionary-red guide words;
+   dark  = the same dictionary in a warm charcoal leather cover: soft charcoal pages,
+           paper-coloured ink, coral guide words. Gilt is the same in both. */
 :root {
-  color-scheme: light dark; /* Chrome's own controls (dropdown lists, checkboxes) follow the theme */
-  --bg: #f7f7f5;
-  --panel: #ffffff;
-  --side: #efeee9;
-  --text: #1f1f1d;
-  --text-2: #3d3c39;
-  --muted: #6b6a66;
-  --line: #e2e0da;
-  --accent: #c8901a;
-  --accent-hover: #b37f12;
-  --on-accent: #1f1a10;
-  --accent-soft: #f6ead0;
-  --danger: #b3261e;
-  --hover: rgba(0, 0, 0, 0.05);
-  --code: #f1f0ec;
+  color-scheme: light;
+  --bg: #ffffff;
+  --raised: #f6f4ef;      /* a row under the pointer, inputs */
+  --text: #1c1b18;
+  --text-2: #4a4740;      /* answer text: a step softer than the titles */
+  --muted: #6d6a62;
+  --line: #e6e2d8;        /* hairline rules */
+  --line-strong: #1c1b18; /* the rule under a guide word */
+  --guide: #8a1f1f;       /* dictionary-red guide words */
+  --accent: #c99a2e;      /* gilt */
+  --accent-text: #7a5a12; /* gilt used as text */
+  --accent-hover: #d9ad45;
+  --on-accent: #1c1b18;
+  --accent-soft: #f3e6c4;
+  --danger: #a3271e;
+  --hover: rgba(28, 27, 24, 0.05);
+  --code: #f3f1ec;
+  --primary-bg: #1c1b18;  /* Open chat */
+  --primary-text: #ffffff;
+  --primary-line: #1c1b18;
+  --side: #f1efea;        /* projects sidebar */
+  --side-raised: #e6e2d9;
+  --side-text: #1c1b18;
+  --side-muted: #5f5b54;
+  --side-line: #ddd8cd;
+  --side-gilt: #7a5a12;
+  --pill: #1c1b18;        /* the selected project */
+  --pill-text: #ffffff;
+  --pill-muted: #cfcabd;
+  --edge: linear-gradient(90deg, #f6f4ef, #efe9dc); /* the index strip */
+  --tab: #1c1b18;
+  --tab-text: #ffffff;
+  --tab-hover: #3a3833;
+  --tab-hover-text: #ffffff;
+  --undo-action: #d9ad45;
   --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1c1c1b;
-    --panel: #252524;
-    --side: #171716;
-    --text: #ecebe7;
-    --text-2: #c9c7c1;
-    --muted: #9d9b95;
-    --line: #3a3936;
-    --accent: #e0aa3e;
-    --accent-hover: #ebbb57;
-    --on-accent: #1f1a10;
-    --accent-soft: #3d3220;
-    --danger: #f2867d;
-    --hover: rgba(255, 255, 255, 0.06);
-    --code: #1b1b1a;
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #2f2d29;          /* warm charcoal, like a dark leather cover; soft, not black */
+  --raised: #3a3832;
+  --text: #ece7dc;
+  --text-2: #d0cabd;
+  --muted: #aea79a;
+  --line: #45423c;
+  --line-strong: #7d776c;
+  --guide: #f0927f;
+  --accent: #d4a640;
+  --accent-text: #d4a640;
+  --accent-hover: #e2b858;
+  --on-accent: #1a1916;
+  --accent-soft: #4d4022;
+  --danger: #f39486;
+  --hover: rgba(236, 231, 220, 0.07);
+  --code: #262420;
+  --primary-bg: transparent;
+  --primary-text: #ece7dc;
+  --primary-line: #5d5951;
+  --side: #262420;
+  --side-raised: #34322c;
+  --side-text: #ece7dc;
+  --side-muted: #aea79a;
+  --side-line: #3a3832;
+  --side-gilt: #d4a640;
+  --pill: #ece7dc;
+  --pill-text: #262420;
+  --pill-muted: #5c574f;
+  --edge: #262420;
+  --tab: #3a3732;
+  --tab-text: #ece7dc;
+  --tab-hover: #48453f;
+  --tab-hover-text: #ffffff;
+  --undo-action: #6b4f0a;
+}
+
+/* Hidden until the saved look is applied, so the page never flashes the other one */
+html:not([data-theme]) body {
+  visibility: hidden;
 }
 
 * {
   box-sizing: border-box;
 }
 
-/* Browser surfaces in the page's own colours: selected text and scrollbars */
 ::selection {
   background: var(--accent-soft);
   color: var(--text);
 }
 
 html,
-.sidebar,
 .md-code,
 .md-table {
-  scrollbar-color: var(--line) transparent;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.sidebar,
+.index {
+  scrollbar-color: var(--side-raised) transparent;
 }
 
 body {
   margin: 0;
   display: flex;
   min-height: 100vh;
-  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 14px/1.55 var(--sans);
   background: var(--bg);
   color: var(--text);
 }
+
+/* ---------- Controls ---------- */
 
 button,
 select,
@@ -71,21 +129,30 @@ input {
 
 button,
 select {
-  padding: 4px 10px;
+  padding: 5px 11px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: var(--panel);
+  background: transparent;
   cursor: pointer;
+  transition: background-color 0.12s ease-out, border-color 0.12s ease-out, color 0.12s ease-out;
 }
 
 button:hover,
 select:hover {
-  background: var(--hover);
+  background-color: var(--hover);
+  border-color: var(--line-strong);
 }
 
-/* The opened list of a dropdown: always readable, whatever the system theme */
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The opened list of a dropdown: always readable */
 option {
-  background: var(--panel);
+  background: var(--raised);
   color: var(--text);
 }
 
@@ -93,35 +160,37 @@ button.danger {
   color: var(--danger);
 }
 
-button:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* The one main action (Open chat): filled gold */
+/* The one main action (Open chat) */
 button.primary {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--on-accent);
+  border-color: var(--primary-line);
+  background: var(--primary-bg);
+  color: var(--primary-text);
   font-weight: 600;
 }
 
-button.primary:hover {
-  background: var(--accent-hover);
+button.primary:hover,
+.item:hover button.primary,
+.item:focus-within button.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.item button.primary:hover {
   border-color: var(--accent-hover);
+  background: var(--accent-hover);
 }
 
 /* Secondary actions: text only until pointed at */
 button.quiet,
 select.quiet {
   border-color: transparent;
-  background-color: transparent;
   color: var(--muted);
 }
 
 button.quiet:hover,
 select.quiet:hover {
+  border-color: transparent;
   background-color: var(--hover);
   color: var(--text);
 }
@@ -132,13 +201,15 @@ button.quiet.danger:hover {
 
 button.link {
   border: none;
-  background: none;
   padding: 4px 0;
-  color: var(--accent);
+  background: none;
+  color: var(--accent-text);
 }
 
 button.link:hover {
+  background: none;
   text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* ---------- Sidebar ---------- */
@@ -146,27 +217,32 @@ button.link:hover {
 .sidebar {
   position: sticky;
   top: 0;
-  width: 250px;
+  width: 248px;
   flex-shrink: 0;
   height: 100vh;
   overflow-y: auto;
-  padding: 20px 12px;
+  padding: 24px 14px;
   background: var(--side);
-  border-right: 1px solid var(--line);
+  color: var(--side-text);
+  border-right: 1px solid var(--side-line);
 }
 
 .brand {
-  padding: 0 10px 16px;
-  font-weight: 600;
+  padding: 0 10px 24px;
+  font-weight: 650;
   font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.brand-star {
+  margin-right: 4px;
+  color: var(--side-gilt);
 }
 
 .nav-label {
-  padding: 16px 10px 6px;
+  padding: 18px 10px 6px;
   font-size: 12px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--side-muted);
 }
 
 .nav-item {
@@ -177,13 +253,23 @@ button.link:hover {
   padding: 6px 10px;
   border: none;
   border-radius: 6px;
-  background: none;
+  color: var(--side-text);
   text-align: left;
 }
 
+.nav-item:hover {
+  background: var(--side-raised);
+  color: var(--side-text);
+}
+
 .nav-item.active {
-  background: var(--accent-soft);
+  background: var(--pill);
+  color: var(--pill-text);
   font-weight: 600;
+}
+
+.nav-item.active .nav-count {
+  color: var(--pill-muted);
 }
 
 .nav-name {
@@ -194,20 +280,80 @@ button.link:hover {
 }
 
 .nav-count {
-  color: var(--muted);
+  color: var(--side-muted);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.nav-new {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border: none;
+  color: var(--side-muted);
+  text-align: left;
+}
+
+.nav-new:hover {
+  background: var(--side-raised);
+  color: var(--side-gilt);
 }
 
 .nav-trash {
   margin-top: 16px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  border-top: 1px solid var(--side-line);
   border-radius: 0 0 6px 6px;
-  color: var(--muted);
+  color: var(--side-muted);
 }
 
-.nav-trash.active {
-  color: var(--text);
+/* The "Dark mode" switch, under the projects */
+.theme-toggle {
+  display: flex;
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px 10px;
+  justify-content: space-between;
+  align-items: center;
+  border: none;
+  color: var(--side-muted);
+  text-align: left;
+}
+
+.theme-toggle:hover {
+  background: var(--side-raised);
+  color: var(--side-text);
+}
+
+.switch {
+  position: relative;
+  width: 30px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: var(--side-line);
+  transition: background-color 0.18s ease-out;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--side-text);
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.theme-toggle[aria-checked="true"] .switch {
+  background: var(--accent);
+}
+
+.theme-toggle[aria-checked="true"] .switch::after {
+  background: var(--on-accent);
+  transform: translateX(12px);
 }
 
 /* ---------- Main ---------- */
@@ -215,8 +361,8 @@ button.link:hover {
 main {
   flex: 1;
   min-width: 0;
-  max-width: 900px;
-  padding: 24px 32px 80px;
+  max-width: 1040px;
+  padding: 32px 132px 96px 48px;
 }
 
 .head {
@@ -236,7 +382,10 @@ main {
 
 h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: 28px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
   overflow-wrap: anywhere;
 }
 
@@ -252,7 +401,8 @@ h1 {
 
 .actions[hidden],
 .toolbar[hidden],
-.note[hidden] {
+.note[hidden],
+.index[hidden] {
   display: none;
 }
 
@@ -262,36 +412,39 @@ h1 {
 }
 
 .rename-box {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 650;
   padding: 2px 8px;
   border: 1px solid var(--accent);
   border-radius: 6px;
-  background: var(--panel);
+  background: var(--raised);
 }
 
 .toolbar {
   display: flex;
   gap: 8px;
-  margin: 20px 0 16px;
+  margin: 24px 0 8px;
 }
 
 #search {
   flex: 1;
-  padding: 7px 12px;
+  padding: 8px 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
+  border-radius: 6px;
+  background: var(--raised);
 }
 
-#search:focus,
-.rename-box:focus {
-  outline: 2px solid var(--accent-soft);
-  border-color: var(--accent);
+#search::placeholder {
+  color: var(--muted);
+}
+
+#search:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .empty {
-  margin-top: 40px;
+  margin-top: 56px;
   color: var(--muted);
   text-align: center;
 }
@@ -302,31 +455,65 @@ h1 {
   text-wrap: balance;
 }
 
-/* ---------- Items ---------- */
+/* ---------- Guide words: one per date section ---------- */
 
-.item {
-  margin-bottom: 12px;
-  padding: 14px 16px 10px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 10px;
+.guide {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 32px 0 0;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--line-strong);
+  color: var(--guide);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  scroll-margin-top: 24px;
 }
 
+.guide-count {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Rows ---------- */
+
+.item {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: 24px;
+  padding: 18px 12px 14px;
+  margin: 0 -12px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 4px;
+  transition: background-color 0.12s ease-out;
+}
+
+.item:hover,
+.item:focus-within {
+  background: var(--raised);
+}
+
+/* Left column: which AI, which chat and project, when */
 .meta {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
   font-size: 12px;
   color: var(--muted);
 }
 
-/* Which AI: a small dot in that AI's colour, then its name */
 .ai {
   display: inline-flex;
   flex-shrink: 0;
-  gap: 6px;
+  gap: 7px;
   align-items: center;
   color: var(--text);
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -343,38 +530,40 @@ h1 {
 .ai[data-ai="Perplexity"] { --ai: #20b8cd; }
 .ai[data-ai="Grok"] { --ai: #a1a1aa; }
 
-/* What a project row in Recently deleted is */
 .kind {
-  flex-shrink: 0;
   color: var(--text);
+  font-size: 13px;
   font-weight: 600;
 }
 
 .details {
-  min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
 }
 
 .when {
-  flex-shrink: 0;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-/* "·" between the parts of the details line */
-.meta .details::before,
-.meta .when::before {
-  content: "·";
-  margin-right: 8px;
+.tick {
+  align-self: flex-start;
+  margin: 0 0 6px;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
-/* The question is the card's title */
+/* Right column: the question as the title, the answer, the actions */
+.body {
+  min-width: 0;
+}
+
 .question {
-  margin-top: 8px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 620;
   line-height: 1.35;
   letter-spacing: -0.01em;
   text-wrap: balance;
@@ -384,7 +573,6 @@ h1 {
   overflow: hidden;
 }
 
-/* The answer: a step softer than the title, so the title leads */
 .text {
   margin-top: 6px;
   color: var(--text-2);
@@ -407,6 +595,187 @@ h1 {
   mask-image: linear-gradient(#000 60%, transparent);
 }
 
+.item.deleted .question,
+.item.deleted .text {
+  color: var(--muted);
+}
+
+.item.selected {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.item-actions .spacer {
+  flex: 1;
+}
+
+/* Move and Delete: shown while the row is hovered or a control in it has focus */
+.item-tools {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+.item:hover .item-tools,
+.item:focus-within .item-tools {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .item-tools {
+    opacity: 1;
+  }
+}
+
+.move {
+  max-width: 170px;
+}
+
+/* ---------- The thumb index ---------- */
+
+.index {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  width: 96px;
+  height: 100vh;
+  padding: 132px 8px 24px 0;
+  overflow-y: auto;
+  background: var(--edge);
+  border-left: 1px solid var(--side-line);
+}
+
+/* The gilt page edge */
+.index::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100vh;
+  background: var(--accent);
+}
+
+.tab {
+  flex-shrink: 0;
+  width: 78px;
+  min-height: 54px;
+  padding: 6px 6px 6px 12px;
+  border: none;
+  border-radius: 27px 0 0 27px;
+  background: var(--tab);
+  color: var(--tab-text);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
+
+.tab:hover {
+  background: var(--tab-hover);
+  color: var(--tab-hover-text);
+}
+
+.tab.on {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+@media (max-width: 900px) {
+  .index {
+    display: none;
+  }
+
+  main {
+    padding-right: 32px;
+  }
+}
+
+/* ---------- Selection bar ---------- */
+
+.selection-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+}
+
+.selection-bar[hidden] {
+  display: none;
+}
+
+.selection-bar label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.selection-bar input {
+  accent-color: var(--accent);
+}
+
+.selection-bar .spacer {
+  flex: 1;
+}
+
+/* ---------- Undo bar ---------- */
+
+.undo {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 3;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 12px 10px 18px;
+  border-radius: 8px;
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: 0 8px 28px rgba(28, 27, 24, 0.3);
+}
+
+.undo[hidden] {
+  display: none;
+}
+
+.undo button {
+  border: none;
+  color: var(--undo-action);
+  font-weight: 650;
+}
+
+.undo button:hover {
+  background: rgba(127, 127, 127, 0.2);
+}
+
 /* ---------- Saved answer, formatted (library.js: renderMarkdown) ---------- */
 
 .md {
@@ -427,21 +796,22 @@ h1 {
   text-wrap: pretty;
 }
 
-/* Headings: more space above than below, small steps (they sit inside a card) */
+/* Headings: more space above than below, small steps (they sit inside a row) */
 .md-h {
   max-width: 72ch;
   margin: 1.1em 0 0.35em;
+  color: var(--text);
   font-weight: 650;
   line-height: 1.3;
   text-wrap: balance;
 }
 
 h3.md-h {
-  font-size: 16px;
+  font-size: 15.5px;
 }
 
 h4.md-h {
-  font-size: 15px;
+  font-size: 14.5px;
 }
 
 h5.md-h {
@@ -468,11 +838,12 @@ h5.md-h {
 }
 
 .md strong {
+  color: var(--text);
   font-weight: 650;
 }
 
 .md-link {
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
@@ -491,11 +862,10 @@ h5.md-h {
 }
 
 .md-code {
-  position: relative;
   margin: 0.4em 0 0.8em;
   padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--code);
   overflow-x: auto;
   font: 12.5px/1.55 var(--mono);
@@ -513,14 +883,14 @@ h5.md-h {
   float: right;
   margin: -2px -2px 0 12px;
   color: var(--muted);
-  font: 11px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 11px/1.4 var(--sans);
 }
 
 .md-quote {
   max-width: 72ch;
   margin: 0 0 0.65em;
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--hover);
   color: var(--muted);
 }
@@ -552,120 +922,6 @@ h5.md-h {
 
 .md-table th {
   background: var(--hover);
-  font-weight: 600;
-}
-
-.item.deleted {
-  opacity: 0.85;
-}
-
-.item.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
-}
-
-.tick {
-  margin: 0 2px 0 0;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-/* ---------- Selection bar ---------- */
-
-.selection-bar {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent);
-  border-radius: 10px;
-}
-
-.selection-bar[hidden] {
-  display: none;
-}
-
-.selection-bar label {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.selection-bar input {
-  accent-color: var(--accent);
-}
-
-.selection-bar .spacer {
-  flex: 1;
-}
-
-.item-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.item-actions .spacer {
-  flex: 1;
-}
-
-/* Move and Delete: shown while the card is hovered or a control in it has focus */
-.item-tools {
-  display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.15s ease-out;
-}
-
-.item:hover .item-tools,
-.item:focus-within .item-tools {
-  opacity: 1;
-}
-
-/* Touch screens have no hover: always show them */
-@media (hover: none) {
-  .item-tools {
-    opacity: 1;
-  }
-}
-
-.move {
-  max-width: 170px;
-}
-
-/* ---------- Undo bar ---------- */
-
-.undo {
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  padding: 10px 12px 10px 18px;
-  border-radius: 10px;
-  background: #2b2b29;
-  color: #fff;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
-}
-
-.undo[hidden] {
-  display: none;
-}
-
-.undo button {
-  border: none;
-  background: none;
-  color: var(--accent);
+  color: var(--text);
   font-weight: 600;
 }

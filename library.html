@@ -7,8 +7,11 @@
 </head>
 <body>
   <aside class="sidebar">
-    <div class="brand">★ AI Chat Bookmarks</div>
+    <div class="brand"><span class="brand-star">★</span> AI Chat Bookmarks</div>
     <nav id="projects"></nav>
+    <button id="theme-toggle" class="theme-toggle" type="button" role="switch" aria-checked="false">
+      <span>Dark mode</span><span class="switch" aria-hidden="true"></span>
+    </button>
   </aside>
 
   <main>
@@ -45,6 +48,8 @@
 
     <div id="list"></div>
   </main>
+
+  <nav id="index" class="index" aria-label="Jump to a section" hidden></nav>
 
   <div id="undo" class="undo" hidden>
     <span id="undo-text"></span>

@@ -16,3 +16,8 @@ acb-debug*.json
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Design-skill working files (decision sketches, question sessions); its surface briefs stay in git
+.impeccable/mocks/
+.impeccable/questions/
+.impeccable/review/

@@ -38,6 +38,8 @@ Two use cases. Every decision should serve these:
 - library.html / library.js / library.css
 - content.css: all classes prefixed `acb-` so they never clash with the sites
 - icons/: extension icons (16, 48, 128 px)
+- PRODUCT.md (product record) and .impeccable/surfaces/ (design briefs): design docs for the
+  /impeccable skill, not loaded by the extension. DESIGN.md joins them when the redesign is finished
 
 Loading: in manifest content_scripts the order is common.js → adapters.js → content.js.
 background.js loads common.js with `importScripts`. library.html loads it with a script tag.
@@ -54,6 +56,7 @@ background.js loads common.js with `importScripts`. library.html loads it with a
 - pendingJump: { itemId, url, time, panelView, panelScroll } (temporary, see "Must handle"; panelView and
   panelScroll = reopen the panel like this, scrolled to the same spot)
 - panelPos: { left, top } where the user dragged the Alt+B panel (null = default top-right)
+- theme: 'light' | 'dark', the look the user picked with the Library's "Dark mode" switch (default light)
 - Store the actual answer text, not just a link, so saved items survive chat deletion
 - text is simple markdown: code blocks, lists, headings, bold, links. Everything else becomes plain text
 - hash and prefix are made from the text with whitespace collapsed and trimmed

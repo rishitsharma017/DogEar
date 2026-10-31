@@ -269,6 +269,18 @@ function setPanelPos(pos) {
   return queued(() => chrome.storage.local.set({ panelPos: pos }));
 }
 
+// ---------- Theme ----------
+
+// The user's choice of light or dark look ('light' or 'dark'); light until they switch.
+async function getTheme() {
+  const { theme } = await chrome.storage.local.get({ theme: 'light' });
+  return theme === 'dark' ? 'dark' : 'light';
+}
+
+function setTheme(theme) {
+  return queued(() => chrome.storage.local.set({ theme: theme === 'dark' ? 'dark' : 'light' }));
+}
+
 // ---------- Markdown export ----------
 
 async function exportProjectMarkdown(projectId) {
