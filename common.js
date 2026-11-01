@@ -281,6 +281,27 @@ function setTheme(theme) {
   return queued(() => chrome.storage.local.set({ theme: theme === 'dark' ? 'dark' : 'light' }));
 }
 
+// ---------- Dates ----------
+
+// "just now", "5 min ago", "2 h ago", "Yesterday", "3 days ago", then "Oct 14" (with the year
+// when it's another year). Used by the Library and the Alt+B panel.
+function timeAgo(ms) {
+  const min = Math.round((Date.now() - ms) / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min} min ago`;
+  const hours = Math.round(min / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const day = d => new Date(d).setHours(0, 0, 0, 0);
+  const days = Math.round((day(Date.now()) - day(ms)) / 86400000);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  const date = new Date(ms);
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+  return date.toLocaleDateString(undefined, sameYear
+    ? { month: 'short', day: 'numeric' }
+    : { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 // ---------- Markdown export ----------
 
 async function exportProjectMarkdown(projectId) {

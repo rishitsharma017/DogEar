@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-02T00:00:00Z",
+  "title": "Design System: AI Chat Bookmarks",
+  "extensions": {
+    "colorMeta": {
+      "india-paper": { "role": "neutral", "displayName": "India Paper", "canonical": "#ffffff", "tonalRamp": ["#2f2d29", "#45423c", "#6d6a62", "#aea79a", "#d0cabd", "#e6e2d8", "#f6f4ef", "#ffffff"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#1c1b18", "tonalRamp": ["#1c1b18", "#2f2d29", "#4a4740", "#6d6a62", "#aea79a", "#d0cabd", "#e6e2d8", "#f6f4ef"] },
+      "dictionary-red": { "role": "primary", "displayName": "Dictionary Red", "canonical": "#8a1f1f", "tonalRamp": ["#3d0e0e", "#5e1515", "#8a1f1f", "#b23a32", "#d0614f", "#f0927f", "#f7c1b5", "#fbe6e0"] },
+      "gilt": { "role": "primary", "displayName": "Gilt", "canonical": "#c99a2e", "tonalRamp": ["#3a2c08", "#4d4022", "#7a5a12", "#a37c22", "#c99a2e", "#d9ad45", "#e8cf8a", "#f3e6c4"] },
+      "leather-charcoal": { "role": "neutral", "displayName": "Leather Charcoal", "canonical": "#2f2d29", "tonalRamp": ["#1a1916", "#262420", "#2f2d29", "#3a3832", "#45423c", "#5d5951", "#7d776c", "#aea79a"] },
+      "coral-guide": { "role": "primary", "displayName": "Coral Guide", "canonical": "#f0927f" },
+      "gilt-dark": { "role": "primary", "displayName": "Gilt (dark)", "canonical": "#d4a640" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The project title at the top of the Library." },
+      "title": { "displayName": "Title", "purpose": "A saved answer's question." },
+      "body": { "displayName": "Body", "purpose": "Formatted answers and all other text." },
+      "label": { "displayName": "Guide word", "purpose": "Date guide words, the picker title, index tab labels." },
+      "mono": { "displayName": "Mono", "purpose": "Code inside saved answers." }
+    },
+    "shadows": [
+      { "name": "popup-light", "value": "0 12px 32px rgba(28,27,24,0.18), 0 2px 6px rgba(28,27,24,0.08)", "purpose": "Save picker and Alt+B panel floating over a chat, light." },
+      { "name": "popup-dark", "value": "0 14px 36px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.25)", "purpose": "The same in dark mode." },
+      { "name": "undo-bar", "value": "0 8px 28px rgba(28,27,24,0.3)", "purpose": "The Library's undo bar." }
+    ],
+    "motion": [
+      { "name": "state", "value": "0.12s ease-out", "purpose": "Hover and focus colour changes." },
+      { "name": "reveal", "value": "0.15s ease-out", "purpose": "Row tools fading in on hover." },
+      { "name": "switch", "value": "0.18s cubic-bezier(0.2, 0.8, 0.2, 1)", "purpose": "Dark mode switch knob." }
+    ],
+    "breakpoints": [
+      { "name": "no-index", "value": "900px" },
+      { "name": "narrow", "value": "720px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Open chat (primary)",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one main action on a row; turns gilt on the hovered or focused row.",
+      "html": "<button class=\"ds-btn-primary\">Open chat</button>",
+      "css": ".ds-btn-primary { padding: 5px 11px; border: 1px solid #1c1b18; border-radius: 6px; background: #1c1b18; color: #ffffff; font: 600 14px/1.55 system-ui, sans-serif; cursor: pointer; transition: background-color 0.12s ease-out, border-color 0.12s ease-out, color 0.12s ease-out; } .ds-btn-primary:hover { background: #c99a2e; border-color: #c99a2e; color: #1c1b18; } .ds-btn-primary:focus-visible { outline: 2px solid #c99a2e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Quiet button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Copy, Rename, Export and other secondary actions.",
+      "html": "<button class=\"ds-btn\">Copy</button>",
+      "css": ".ds-btn { padding: 5px 11px; border: 1px solid #e6e2d8; border-radius: 6px; background: transparent; color: #1c1b18; font: 14px/1.55 system-ui, sans-serif; cursor: pointer; transition: background-color 0.12s ease-out, border-color 0.12s ease-out; } .ds-btn:hover { background: rgba(28,27,24,0.05); border-color: #1c1b18; } .ds-btn:focus-visible { outline: 2px solid #c99a2e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Search",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Library search field.",
+      "html": "<input class=\"ds-search\" type=\"search\" placeholder=\"Search saved answers…\">",
+      "css": ".ds-search { width: 320px; padding: 8px 12px; border: 1px solid #e6e2d8; border-radius: 6px; background: #f6f4ef; color: #1c1b18; font: 14px/1.55 system-ui, sans-serif; } .ds-search::placeholder { color: #6d6a62; } .ds-search:focus-visible { outline: 2px solid #c99a2e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Projects rail",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Project list with the active project as an ink pill.",
+      "html": "<nav class=\"ds-rail\"><button class=\"ds-nav on\">Research</button><button class=\"ds-nav\">Inbox</button></nav>",
+      "css": ".ds-rail { display: flex; flex-direction: column; gap: 2px; width: 220px; padding: 12px; background: #f1efea; } .ds-nav { padding: 6px 10px; border: none; border-radius: 6px; background: transparent; color: #1c1b18; font: 14px/1.55 system-ui, sans-serif; text-align: left; cursor: pointer; } .ds-nav:hover { background: #e6e2d9; } .ds-nav.on { background: #1c1b18; color: #ffffff; font-weight: 600; } .ds-nav:focus-visible { outline: 2px solid #c99a2e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Index tab",
+      "kind": "custom",
+      "refersTo": "index-tab",
+      "description": "Half-moon thumb-index tab; the section in view is gilt.",
+      "html": "<div class=\"ds-strip\"><button class=\"ds-tab on\">Today</button><button class=\"ds-tab\">This week</button></div>",
+      "css": ".ds-strip { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; width: 96px; padding: 16px 8px 16px 0; background: linear-gradient(90deg, #f6f4ef, #efe9dc); border-right: 6px solid #c99a2e; } .ds-tab { width: 78px; min-height: 54px; padding: 6px 6px 6px 12px; border: none; border-radius: 27px 0 0 27px; background: #1c1b18; color: #ffffff; font: 700 11px/1.15 system-ui, sans-serif; cursor: pointer; } .ds-tab:hover { background: #3a3833; } .ds-tab.on { background: #c99a2e; color: #1c1b18; } .ds-tab:focus-visible { outline: 2px solid #c99a2e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Guide word and row",
+      "kind": "card",
+      "description": "A date guide word over a strong rule, then a hairline-divided row.",
+      "html": "<div class=\"ds-guide\"><span>Today</span><span class=\"ds-n\">3</span></div><div class=\"ds-row\"><div class=\"ds-who\"><span class=\"ds-dot\"></span>Claude</div><div><div class=\"ds-q\">How do thumb indexes work?</div><div class=\"ds-a\">Notches cut into the page edge let a thumb open the book at a letter…</div></div></div>",
+      "css": ".ds-guide { display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 2px solid #1c1b18; color: #8a1f1f; font: 700 13px system-ui, sans-serif; letter-spacing: 0.02em; } .ds-n { color: #6d6a62; font-weight: 500; font-size: 12px; } .ds-row { display: grid; grid-template-columns: 168px 1fr; gap: 24px; padding: 18px 0 14px; border-bottom: 1px solid #e6e2d8; font: 14px/1.55 system-ui, sans-serif; color: #1c1b18; } .ds-row:hover { background: #f6f4ef; } .ds-who { display: flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 600; align-self: start; } .ds-dot { width: 7px; height: 7px; border-radius: 50%; background: #d97757; } .ds-q { font-size: 16px; font-weight: 620; line-height: 1.35; } .ds-a { color: #4a4740; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Thumb Index",
+    "overview": "A dictionary for saved AI answers. The Library is a reading column of answers divided by hairline rules, grouped under dictionary-red guide words (Today, Yesterday, This week, months), with half-moon thumb-index tabs on the right edge that jump straight to a section. A gilt strip runs down the page edge like the gilded edge of a printed book. Finding one answer fast and reading it comfortably matter equally.\n\nThere are two looks behind a \"Dark mode\" switch. Light is white India paper with black ink. Dark is the same dictionary bound in warm charcoal leather: soft charcoal pages, paper-coloured ink, coral guide words. Gilt is the same accent in both. The in-chat save picker and Alt+B panel carry the same world in compact form and follow the same switch, so they always look like this extension, never like the host site.\n\nThe user explicitly rejected navy, pure black and mid-tone darks, and anything that reads as a generic AI site (near-black with glow, or cream with a serif), as well as flashy effects.",
+    "keyCharacteristics": [
+      "Rows divided by hairline rules, not cards",
+      "Red (or coral) guide words over a strong rule mark every section",
+      "Gilt is rationed: current tab, page edge, saved stars, the one primary action in reach",
+      "A small colour dot names each AI",
+      "Flat surfaces; only floating popups cast a shadow"
+    ],
+    "rules": [
+      { "name": "The Rationed Gilt Rule", "body": "Gilt appears only on the current tab, the page edge, saved stars, focus rings and the one primary action in reach. If two gilt things compete on a screen, one is wrong.", "section": "colors" },
+      { "name": "The One Red Voice Rule", "body": "Red (coral in dark) belongs to guide words. Danger actions use their own muted red text, never a filled red block.", "section": "colors" },
+      { "name": "The Structure-Not-Typeface Rule", "body": "Hierarchy comes from weight, colour and rules. Adding a bundled display font was tried and dropped because the difference wasn't visible to the user.", "section": "typography" },
+      { "name": "The Flat Page Rule", "body": "Nothing on the Library page itself casts a shadow. A selected row is shown with a gilt-soft fill and a 1px gilt inset line, not a lift.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do divide lists with 1px hairlines that align with the 2px guide rule above them.",
+      "Do keep gilt for the current tab, page edge, saved stars, focus rings and the one primary action.",
+      "Do build every new surface in both looks, light (#ffffff paper) and dark (#2f2d29 charcoal), from the same tokens.",
+      "Do draw icons as SVG with DOM calls, never typed characters and never innerHTML.",
+      "Do use `el.animate` for motion in chats (some sites switch off CSS animations)."
+    ],
+    "donts": [
+      "Don't wrap rows in cards or put them on a grey dashboard.",
+      "Don't use navy, pure black, or near-black with glow for dark mode.",
+      "Don't use cream paper with a serif face; it reads as a generic AI look.",
+      "Don't add flashy effects; motion is short and quiet."
+    ]
+  }
+}

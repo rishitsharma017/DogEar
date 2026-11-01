@@ -72,22 +72,61 @@
   z-index: 2147483000 !important;
 }
 
+/* The picker and the Alt+B panel carry the Library's "Thumb Index" look in a compact form:
+   paper or charcoal (acb-dark, from the Library's Dark mode switch), ink text, a red guide
+   word over a rule, hairline rows, gilt only for what's saved or new. */
+.acb-picker,
+.acb-panel {
+  --acb-bg: #ffffff;
+  --acb-raised: #f6f4ef;
+  --acb-text: #1c1b18;
+  --acb-text-2: #4a4740;
+  --acb-muted: #6d6a62;
+  --acb-line: #e6e2d8;
+  --acb-rule: #1c1b18;
+  --acb-guide: #8a1f1f;
+  --acb-gilt: #c99a2e;
+  --acb-gilt-text: #7a5a12;
+  --acb-gilt-soft: rgba(201, 154, 46, 0.25);
+  --acb-hover: rgba(28, 27, 24, 0.05);
+  --acb-danger: #a3271e;
+  --acb-shadow: 0 12px 32px rgba(28, 27, 24, 0.18), 0 2px 6px rgba(28, 27, 24, 0.08);
+}
+
+.acb-picker.acb-dark,
+.acb-panel.acb-dark {
+  --acb-bg: #2f2d29;
+  --acb-raised: #3a3832;
+  --acb-text: #ece7dc;
+  --acb-text-2: #d0cabd;
+  --acb-muted: #aea79a;
+  --acb-line: #45423c;
+  --acb-rule: #7d776c;
+  --acb-guide: #f0927f;
+  --acb-gilt: #d4a640;
+  --acb-gilt-text: #d4a640;
+  --acb-gilt-soft: rgba(212, 166, 64, 0.25);
+  --acb-hover: rgba(236, 231, 220, 0.07);
+  --acb-danger: #f39486;
+  --acb-shadow: 0 14px 36px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
 .acb-picker {
   all: initial;
   position: fixed;
   z-index: 2147483647;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  width: 240px;
-  padding: 10px;
+  gap: 8px;
+  width: 248px;
+  padding: 12px;
   box-sizing: border-box;
-  background: #ffffff;
-  color: #1f1f1f;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-  font: 14px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--acb-bg);
+  color: var(--acb-text);
+  border: 1px solid var(--acb-line);
+  border-radius: 8px;
+  box-shadow: var(--acb-shadow);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 .acb-picker * {
@@ -96,87 +135,97 @@
   color: inherit;
 }
 
+/* "Save to project": a guide word over a rule */
 .acb-picker-title {
-  font-weight: 600;
-  font-size: 13px;
-  opacity: 0.8;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--acb-rule);
+  color: var(--acb-guide);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .acb-picker-input {
   all: unset;
   display: block;
   width: 100%;
-  padding: 6px 8px;
-  border: 1px solid rgba(127, 127, 127, 0.35);
-  border-radius: 6px;
+  padding: 7px 9px;
   box-sizing: border-box;
+  border: 1px solid var(--acb-line);
+  border-radius: 6px;
+  background: var(--acb-raised);
+  color: var(--acb-text);
+}
+
+.acb-picker-input::placeholder {
+  color: var(--acb-muted);
 }
 
 .acb-picker-input:focus {
-  border-color: #f5b301;
+  border-color: var(--acb-gilt);
+  box-shadow: 0 0 0 2px var(--acb-gilt-soft);
 }
 
 .acb-picker-list {
   display: flex;
   flex-direction: column;
-  max-height: 200px;
+  max-height: 220px;
   overflow-y: auto;
+  scrollbar-color: var(--acb-line) transparent;
+  scrollbar-width: thin;
 }
 
 .acb-picker-item,
 .acb-picker-remove {
   all: unset;
   display: block;
-  padding: 6px 8px;
-  border-radius: 6px;
+  padding: 7px 9px;
+  border-radius: 5px;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.acb-picker-item:hover,
-.acb-picker-item:focus-visible {
-  background: rgba(127, 127, 127, 0.15);
+.acb-picker-item:hover {
+  background: var(--acb-hover);
+}
+
+.acb-picker-item:focus-visible,
+.acb-picker-remove:focus-visible {
+  outline: 2px solid var(--acb-gilt);
+  outline-offset: -2px;
 }
 
 .acb-picker-item.acb-last::after {
   content: " · last used";
+  color: var(--acb-gilt-text);
   font-size: 12px;
-  opacity: 0.55;
 }
 
 .acb-picker-new {
-  color: #a87400;
+  color: var(--acb-gilt-text);
+  font-weight: 600;
 }
 
 .acb-picker-label {
-  padding: 2px 8px;
+  padding: 2px 9px;
+  color: var(--acb-muted);
   font-size: 12px;
-  opacity: 0.6;
 }
 
 .acb-picker-remove {
   margin-top: 2px;
-  color: #d33b3b;
+  border-top: 1px solid var(--acb-line);
+  border-radius: 0 0 5px 5px;
+  color: var(--acb-danger);
 }
 
-.acb-picker-remove:hover,
-.acb-picker-remove:focus-visible {
-  background: rgba(211, 59, 59, 0.12);
-}
-
-@media (prefers-color-scheme: dark) {
-  .acb-picker {
-    background: #2a2a2a;
-    color: #eeeeee;
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  }
-
-  .acb-picker-new {
-    color: #f5b301;
-  }
+.acb-picker-remove:hover {
+  background: var(--acb-hover);
 }
 
 .acb-star:hover,
@@ -196,6 +245,7 @@
 }
 
 /* ---------- Panel (Alt+B) ---------- */
+/* Colours: the shared .acb-picker, .acb-panel block above. */
 
 .acb-panel {
   all: initial;
@@ -210,11 +260,11 @@
   max-height: min(560px, calc(100vh - 32px));
   max-width: calc(100vw - 32px);
   box-sizing: border-box;
-  background: #ffffff;
-  color: #1f1f1f;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  background: var(--acb-bg);
+  color: var(--acb-text);
+  border: 1px solid var(--acb-line);
+  border-radius: 8px;
+  box-shadow: var(--acb-shadow);
   font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
   overflow: hidden;
 }
@@ -225,13 +275,13 @@
   color: inherit;
 }
 
+/* The top bar (also the drag handle): ruled off like a guide word */
 .acb-panel-head {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px;
-  border-bottom: 1px solid rgba(127, 127, 127, 0.2);
-  /* The top bar is the drag handle. */
+  padding: 10px 10px 9px;
+  border-bottom: 2px solid var(--acb-rule);
   cursor: grab;
   user-select: none;
   touch-action: none;
@@ -242,25 +292,36 @@
 }
 
 .acb-panel-grip {
-  font-size: 16px;
-  line-height: 1;
-  opacity: 0.5;
+  display: inline-flex;
+  color: var(--acb-muted);
+}
+
+.acb-panel-grip svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
 }
 
 .acb-panel-select {
   flex: 1;
   min-width: 0;
   padding: 6px 8px;
-  border: 1px solid rgba(127, 127, 127, 0.35);
+  border: 1px solid var(--acb-line);
   border-radius: 6px;
-  background: transparent;
+  background: var(--acb-raised);
   font-weight: 600;
   cursor: pointer;
 }
 
+.acb-panel-select:focus-visible,
+.acb-panel-close:focus-visible {
+  outline: 2px solid var(--acb-gilt);
+  outline-offset: 1px;
+}
+
 .acb-panel-select option {
-  background: #ffffff;
-  color: #1f1f1f;
+  background: var(--acb-bg);
+  color: var(--acb-text);
 }
 
 .acb-panel-close {
@@ -271,36 +332,84 @@
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  font-size: 20px;
-  line-height: 1;
+  color: var(--acb-muted);
   cursor: pointer;
-  opacity: 0.7;
 }
 
-.acb-panel-close:hover,
-.acb-panel-close:focus-visible {
-  background: rgba(127, 127, 127, 0.15);
-  opacity: 1;
+.acb-panel-close svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.acb-panel-close:hover {
+  background: var(--acb-hover);
+  color: var(--acb-text);
 }
 
 .acb-panel-list {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 6px;
+  scrollbar-color: var(--acb-line) transparent;
+  scrollbar-width: thin;
 }
 
+/* Rows like the Library's: hairline rules, the question as the title */
 .acb-panel-item {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 10px 14px 11px;
+  border-bottom: 1px solid var(--acb-line);
+  cursor: pointer;
+  transition: background-color 0.12s ease-out;
 }
 
-.acb-panel-item + .acb-panel-item {
-  border-top: 1px solid rgba(127, 127, 127, 0.15);
+.acb-panel-item:last-child {
+  border-bottom: none;
 }
+
+.acb-panel-item:hover {
+  background: var(--acb-hover);
+}
+
+.acb-panel-meta {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  color: var(--acb-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acb-panel-ai {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 6px;
+  align-items: center;
+  margin-right: 4px;
+  color: var(--acb-text);
+  font-weight: 600;
+}
+
+.acb-ai-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--acb-ai, var(--acb-muted));
+}
+
+.acb-panel-ai[data-ai="Claude"] { --acb-ai: #d97757; }
+.acb-panel-ai[data-ai="ChatGPT"] { --acb-ai: #10a37f; }
+.acb-panel-ai[data-ai="Gemini"] { --acb-ai: #4c8df6; }
+.acb-panel-ai[data-ai="Perplexity"] { --acb-ai: #20b8cd; }
+.acb-panel-ai[data-ai="Grok"] { --acb-ai: #a1a1aa; }
 
 .acb-panel-q,
 .acb-panel-text {
@@ -311,49 +420,20 @@
 }
 
 .acb-panel-q {
-  -webkit-line-clamp: 1;
-  font-weight: 600;
+  -webkit-line-clamp: 2;
+  font-weight: 620;
+  line-height: 1.35;
 }
 
 .acb-panel-text {
   -webkit-line-clamp: 2;
-  opacity: 0.85;
-}
-
-.acb-panel-meta {
-  font-size: 12px;
-  opacity: 0.55;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--acb-text-2);
+  font-size: 13px;
 }
 
 .acb-panel-empty {
-  padding: 16px 10px;
-  opacity: 0.6;
-}
-
-@media (prefers-color-scheme: dark) {
-  .acb-panel {
-    background: #2a2a2a;
-    color: #eeeeee;
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-  }
-
-  .acb-panel-select option {
-    background: #2a2a2a;
-    color: #eeeeee;
-  }
-}
-
-/* Panel items are clickable (jump to the answer). */
-.acb-panel-item {
-  cursor: pointer;
-}
-
-.acb-panel-item:hover {
-  background: rgba(127, 127, 127, 0.12);
+  padding: 18px 14px;
+  color: var(--acb-muted);
 }
 
 /* ---------- Jump to message ---------- */

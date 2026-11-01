@@ -102,11 +102,13 @@ html,
 .md-code,
 .md-table {
   scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
 }
 
 .sidebar,
 .index {
   scrollbar-color: var(--side-raised) transparent;
+  scrollbar-width: thin;
 }
 
 body {
@@ -235,8 +237,11 @@ button.link:hover {
 }
 
 .brand-star {
+  width: 14px;
+  height: 14px;
   margin-right: 4px;
-  color: var(--side-gilt);
+  vertical-align: -1px;
+  fill: var(--side-gilt);
 }
 
 .nav-label {
@@ -487,14 +492,15 @@ h1 {
   gap: 24px;
   padding: 18px 12px 14px;
   margin: 0 -12px;
-  border-bottom: 1px solid var(--line);
+  /* The hairline stops where the guide rule does, not at the row's padded edge. */
+  background: linear-gradient(var(--line), var(--line)) 12px 100% / calc(100% - 24px) 1px no-repeat;
   border-radius: 4px;
   transition: background-color 0.12s ease-out;
 }
 
 .item:hover,
 .item:focus-within {
-  background: var(--raised);
+  background-color: var(--raised);
 }
 
 /* Left column: which AI, which chat and project, when */
@@ -601,7 +607,7 @@ h1 {
 }
 
 .item.selected {
-  background: var(--accent-soft);
+  background-color: var(--accent-soft);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
@@ -705,6 +711,59 @@ h1 {
 
   main {
     padding-right: 32px;
+  }
+}
+
+/* Narrow windows: the sidebar moves to the top (scrolls on its own if there are many
+   projects), and each row stacks its details above the question. */
+@media (max-width: 720px) {
+  body {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: static;
+    width: auto;
+    height: auto;
+    max-height: 42vh;
+    padding: 16px 12px 12px;
+    border-right: none;
+    border-bottom: 1px solid var(--side-line);
+  }
+
+  .brand {
+    padding-bottom: 12px;
+  }
+
+  main {
+    padding: 20px 16px 72px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  #search {
+    flex-basis: 100%;
+  }
+
+  .item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .meta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+
+  .details {
+    -webkit-line-clamp: 1;
   }
 }
 

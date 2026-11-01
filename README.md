@@ -20,10 +20,12 @@ folders, so one research topic can collect answers from several AIs.
   move, rename, export a project as Markdown, and **Recently deleted** to restore anything
   deleted in the last 30 days.
 - **Right-click "Save selection"** on any website: the selected text goes into **Inbox**.
+- **Light and dark look.** A "Dark mode" switch in the Library changes the Library, the save
+  picker and the panel together.
 
 ## Planned
 
-- A more polished look for the picker, panel and Library
+- Library: sort and group by chat, highlight search matches, "/" to search, Copy as text or Markdown
 
 ## Install (developer mode)
 

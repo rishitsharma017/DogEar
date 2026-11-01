@@ -38,8 +38,8 @@ Two use cases. Every decision should serve these:
 - library.html / library.js / library.css
 - content.css: all classes prefixed `acb-` so they never clash with the sites
 - icons/: extension icons (16, 48, 128 px)
-- PRODUCT.md (product record) and .impeccable/surfaces/ (design briefs): design docs for the
-  /impeccable skill, not loaded by the extension. DESIGN.md joins them when the redesign is finished
+- PRODUCT.md (product record), DESIGN.md (design system: colours, type, rules) and .impeccable/
+  (design briefs, design.json): design docs for the /impeccable skill, not loaded by the extension
 
 Loading: in manifest content_scripts the order is common.js → adapters.js → content.js.
 background.js loads common.js with `importScripts`. library.html loads it with a script tag.
@@ -130,11 +130,12 @@ Build order. One step at a time; Claude is the first site.
       - Done (from /impeccable critique, user picked "quiet with gold accents"): saved Markdown shown
         formatted (DOM calls, no innerHTML); calmer cards (gold "Open chat", quiet Copy, Move/Delete on
         hover, "Move to…"); question as card title, softer answer, AI colour dots, relative dates
-      - "+ New project" button in the sidebar
+      - Done (redesign, user picked "Thumb Index"): date guide words, gilt index tabs on the right edge,
+        Dark mode switch (warm charcoal); save picker and Alt+B panel in the same look; recorded in DESIGN.md
+      - Done: "+ New project" button in the sidebar
       - sort (newest / oldest / by AI) and group a project's items by chat
       - highlight search matches in the results
       - "/" focuses search, click a long question to see all of it, Copy as plain text or Markdown
-      - tidy the save picker and the Alt+B panel
 - [ ] 15. Final check on every site, fix what fails (no new features). Not yet confirmed by the user:
       ☆ tooltip matches each site's own; Gemini saved text (no "You said", readable maths); Gemini bubble
       glow after a jump; ☆ only after a new answer finishes (Gemini); ChatGPT "Email" card text when saved;

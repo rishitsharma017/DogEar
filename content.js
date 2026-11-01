@@ -7,7 +7,8 @@ const acb = {
   saved: [],              // items saved from the current chat
   prints: new WeakMap(),  // message element → { hash, prefix } (only for finished answers)
   lastChange: 0,          // when the page last changed (performance.now()), see waitForQuiet
-  leaving: null           // messages of the chat we're switching away from, see waitForQuiet
+  leaving: null,          // messages of the chat we're switching away from, see waitForQuiet
+  theme: 'light'          // the look picked in the Library (light / dark), for the picker and panel
 };
 
 // Parts of a message that are never part of the answer text (incl. the site's button row
@@ -481,6 +482,7 @@ async function openPicker(btn, el) {
     .sort((a, b) => (b.id === lastProjectId) - (a.id === lastProjectId) || a.name.localeCompare(b.name));
 
   const box = h('div', 'acb-ui acb-picker');
+  box.classList.toggle('acb-dark', acb.theme === 'dark');
   const title = h('div', 'acb-picker-title',
     item ? `Saved in “${current ? current.name : 'unknown'}”` : 'Save to project');
   const input = h('input', 'acb-picker-input');
@@ -802,6 +804,36 @@ function showSearchCover(token) {
   cover.addEventListener('wheel', stop, { passive: true });
   document.addEventListener('keydown', onKey, true);
   return { remove, finish };
+}
+
+// Panel close (×) and drag grip (six dots) as SVGs (built with DOM calls), so they look the
+// same on every computer, unlike text characters.
+function closeIcon() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', 'M4 4l8 8M12 4l-8 8');
+  svg.append(path);
+  return svg;
+}
+
+function gripIcon() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 12 12');
+  svg.setAttribute('aria-hidden', 'true');
+  for (const x of [3.5, 8.5]) {
+    for (const y of [2, 6, 10]) {
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('cx', x);
+      dot.setAttribute('cy', y);
+      dot.setAttribute('r', 1.2);
+      svg.append(dot);
+    }
+  }
+  return svg;
 }
 
 // A small check mark as an SVG (built with DOM calls).
@@ -1151,6 +1183,7 @@ function togglePanel() {
     return;
   }
   panel.box = h('div', 'acb-ui acb-panel');
+  panel.box.classList.toggle('acb-dark', acb.theme === 'dark');
   // Keep the site from reacting to keys pressed in the panel.
   panel.box.addEventListener('keydown', e => e.stopPropagation());
   // Hidden until it's filled and moved to where the user dragged it last, so it doesn't
@@ -1208,10 +1241,16 @@ function snippet(markdown) {
 
 function panelRow(item, where) {
   const row = h('div', 'acb-panel-item');
+  // Which AI (its colour dot), then the chat or project, then when: like the Library's rows.
+  const meta = h('div', 'acb-panel-meta');
+  const ai = h('span', 'acb-panel-ai');
+  ai.dataset.ai = item.ai || '';
+  ai.append(h('span', 'acb-ai-dot'), document.createTextNode(item.ai || 'Web clip'));
+  meta.append(ai, document.createTextNode(` · ${[where, timeAgo(item.createdAt)].filter(Boolean).join(' · ')}`));
+  meta.title = new Date(item.createdAt).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' });
+  row.append(meta);
   if (item.question) row.append(h('div', 'acb-panel-q', item.question));
   row.append(h('div', 'acb-panel-text', snippet(item.text)));
-  const meta = [item.ai, where, new Date(item.createdAt).toLocaleDateString()].filter(Boolean);
-  row.append(h('div', 'acb-panel-meta', meta.join(' · ')));
   row.title = item.convId === acb.convId ? 'Jump to this answer' : 'Open the chat and jump to this answer';
   row.addEventListener('click', () => openItem(item));
   return row;
@@ -1237,12 +1276,15 @@ async function renderPanel() {
     renderPanel();
   });
 
-  const close = h('button', 'acb-panel-close', '×');
+  const close = h('button', 'acb-panel-close');
+  close.append(closeIcon());
+  close.setAttribute('aria-label', 'Close');
   close.type = 'button';
   close.title = 'Close (Alt+B)';
   close.addEventListener('click', togglePanel);
 
-  const grip = h('div', 'acb-panel-grip', '⠿');
+  const grip = h('div', 'acb-panel-grip');
+  grip.append(gripIcon());
   grip.title = 'Drag to move';
   const head = h('div', 'acb-panel-head');
   head.append(grip, select, close);
@@ -1312,8 +1354,17 @@ if (acb.adapter) {
   }, 200);
 
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === 'local' && (changes.items || changes.projects)) loadSaved();
+    if (area !== 'local') return;
+    if (changes.items || changes.projects) loadSaved();
+    // Dark mode switched in the Library: an open picker or panel follows right away.
+    if (changes.theme) {
+      acb.theme = changes.theme.newValue === 'dark' ? 'dark' : 'light';
+      for (const el of document.querySelectorAll('.acb-picker, .acb-panel')) {
+        el.classList.toggle('acb-dark', acb.theme === 'dark');
+      }
+    }
   });
+  getTheme().then(theme => { acb.theme = theme; }, () => {});
 
   // Alt+B arrives from background.js.
   chrome.runtime.onMessage.addListener(msg => {

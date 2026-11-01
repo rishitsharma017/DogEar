@@ -39,7 +39,7 @@ exact message.
 FIRST VIEWPORT: Left rail of projects (248px) with "+ New project". Title and count, then search,
 AI filter and Select. A reading column of rule-separated rows: who-column (AI dot and name, project,
 time), question as title with the answer under it, Open chat at the right (gilt on the hovered or
-focused row). Right edge: an 84px index strip with a gilt edge line and half-moon tabs, one per date
+focused row). Right edge: a 96px index strip with a gilt edge line and half-moon tabs, one per date
 group present; the group in view is gilt. Signature move: the thumb tabs; clicking one scrolls to its
 guide word, and the gilt tab follows your scroll.
 
