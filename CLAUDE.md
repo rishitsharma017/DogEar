@@ -125,7 +125,7 @@ Build order. One step at a time; Claude is the first site.
 - [x] 12. Perplexity adapter
 - [x] 13. Grok adapter (grok.com; added by the user). Grok on x.com: tried, then dropped by
       the user (grok.com is enough)
-- [ ] 14. UI polish: ☆ next to each site's own buttons (copy/retry) so it looks built-in; tidy picker, panel,
+- [x] 14. UI polish: ☆ next to each site's own buttons (copy/retry) so it looks built-in; tidy picker, panel,
       library; more visual work (the user wants it to look much better). Library list (user's picks):
       - Done (from /impeccable critique, user picked "quiet with gold accents"): saved Markdown shown
         formatted (DOM calls, no innerHTML); calmer cards (gold "Open chat", quiet Copy, Move/Delete on
@@ -133,9 +133,8 @@ Build order. One step at a time; Claude is the first site.
       - Done (redesign, user picked "Thumb Index"): date guide words, gilt index tabs on the right edge,
         Dark mode switch (warm charcoal); save picker and Alt+B panel in the same look; recorded in DESIGN.md
       - Done: "+ New project" button in the sidebar
-      - sort (newest / oldest / by AI) and group a project's items by chat
-      - highlight search matches in the results
-      - "/" focuses search, click a long question to see all of it, Copy as plain text or Markdown
+      - Done: sort menu (newest / oldest / by AI / by chat), search matches highlighted, "/" focuses search,
+        click a long question to see all of it, Copy menu (plain text or Markdown)
 - [ ] 15. Final check on every site, fix what fails (no new features). Not yet confirmed by the user:
       ☆ tooltip matches each site's own; Gemini saved text (no "You said", readable maths); Gemini bubble
       glow after a jump; ☆ only after a new answer finishes (Gemini); ChatGPT "Email" card text when saved;

@@ -181,6 +181,7 @@ const state = {
   view: 'all',        // 'all', 'trash' or a projectId
   search: '',
   ai: '',             // '' = every AI
+  sort: 'newest',      // 'newest', 'oldest', 'ai' (grouped by AI) or 'chat' (grouped by chat)
   expanded: new Set(), // ids of items showing their full text
   selecting: false,    // checkboxes shown (after clicking "Select")
   selected: new Set(), // ids of ticked items
@@ -219,7 +220,7 @@ async function render() {
   const shown = inView
     .filter(it => !state.ai || it.ai === state.ai)
     .filter(it => matches(it, state.search))
-    .sort((a, b) => b.createdAt - a.createdAt);
+    .sort((a, b) => state.sort === 'oldest' ? a.createdAt - b.createdAt : b.createdAt - a.createdAt);
 
   const filtered = state.search || state.ai;
   $('count').textContent = filtered
@@ -254,15 +255,10 @@ async function render() {
     list.append(empty);
     return;
   }
-  // Grouped under guide words (Today, Yesterday, This week, months), like a dictionary's
-  // sections; the index tabs on the right edge jump between them.
+  // Grouped under guide words, like a dictionary's sections; the index tabs on the right
+  // edge jump between them.
   const names = new Map(projects.map(p => [p.id, p.name]));
-  const groups = [];
-  for (const item of shown) {
-    const g = dateGroup(item.createdAt);
-    if (!groups.length || groups[groups.length - 1].key !== g.key) groups.push({ ...g, items: [] });
-    groups[groups.length - 1].items.push(item);
-  }
+  const groups = groupItems(shown);
   for (const g of groups) {
     const guide = h('h2', 'guide');
     guide.id = `g-${g.key}`;
@@ -274,6 +270,36 @@ async function render() {
     }
   }
   renderIndex(groups);
+}
+
+// The guide-word sections for the chosen order. Newest / oldest: by date. By AI: one section
+// per AI, A–Z, newest first inside. By chat: one per chat, the most recently used chat first,
+// answers in the order they were saved (like the panel's "This chat").
+function groupItems(items) {
+  if (state.sort === 'ai' || state.sort === 'chat') {
+    const byKey = new Map();
+    for (const item of items) {
+      const name = state.sort === 'ai' ? (item.ai || 'Web clip') : (item.chatTitle || 'Untitled chat');
+      const id = state.sort === 'ai' ? name : (item.convId || item.url || name);
+      if (!byKey.has(id)) byKey.set(id, { label: name, items: [] });
+      byKey.get(id).items.push(item);
+    }
+    const groups = [...byKey.values()];
+    if (state.sort === 'ai') groups.sort((a, b) => a.label.localeCompare(b.label));
+    else for (const g of groups) g.items.reverse();
+    return groups.map((g, n) => ({
+      ...g,
+      key: `${state.sort}-${n}`,
+      tab: g.label.length > 18 ? g.label.slice(0, 17).trimEnd() + '…' : g.label
+    }));
+  }
+  const groups = [];
+  for (const item of items) {
+    const g = dateGroup(item.createdAt);
+    if (!groups.length || groups[groups.length - 1].key !== g.key) groups.push({ ...g, items: [] });
+    groups[groups.length - 1].items.push(item);
+  }
+  return groups;
 }
 
 // Which guide-word section a date belongs to: Today, Yesterday, This week (the 5 days before),
@@ -488,7 +514,31 @@ function itemCard(item, projects, projectName, selectable) {
   const body = h('div', 'body');
   card.append(meta, body);
 
-  if (item.question) body.append(h('div', 'question', item.question));
+  // A long question is cut to 2 lines; clicking it shows all of it (and cuts it again).
+  if (item.question) {
+    const question = h('div', 'question', item.question);
+    body.append(question);
+    requestAnimationFrame(() => {
+      if (question.scrollHeight <= question.clientHeight + 2) return;
+      question.classList.add('long');
+      question.tabIndex = 0;
+      question.title = 'Click to see the whole question';
+      const toggle = () => {
+        const open = question.classList.toggle('open');
+        question.title = open ? 'Click to shorten' : 'Click to see the whole question';
+      };
+      question.addEventListener('click', () => {
+        if (!getSelection().isCollapsed) return; // selecting text, not clicking
+        toggle();
+      });
+      question.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle();
+        }
+      });
+    });
+  }
 
   const text = h('div', 'text md');
   text.append(renderMarkdown(item.text));
@@ -543,16 +593,21 @@ function itemCard(item, projects, projectName, selectable) {
   tools.append(move, del);
   actions.append(tools);
 
-  const copy = h('button', 'quiet', 'Copy');
+  // Copy menu: plain text (for anywhere) or Markdown (keeps code blocks, lists, links).
+  const copy = h('select', 'copy quiet');
   copy.title = 'Copy the answer text';
-  copy.addEventListener('click', async () => {
+  const label = new Option('Copy', '');
+  copy.append(label, new Option('As plain text', 'text'), new Option('As Markdown', 'md'));
+  copy.addEventListener('change', async () => {
+    const how = copy.value;
+    copy.value = '';
     try {
-      await navigator.clipboard.writeText(item.text);
-      copy.textContent = 'Copied ✓';
+      await navigator.clipboard.writeText(how === 'md' ? item.text : plainText(item.text));
+      label.textContent = 'Copied ✓';
     } catch (e) {
-      copy.textContent = 'Couldn’t copy';
+      label.textContent = 'Couldn’t copy';
     }
-    setTimeout(() => { copy.textContent = 'Copy'; }, 1500);
+    setTimeout(() => { label.textContent = 'Copy'; }, 1500);
   });
   actions.append(copy);
 
@@ -565,7 +620,49 @@ function itemCard(item, projects, projectName, selectable) {
   }
 
   body.append(actions);
+  if (state.search) highlight(card.querySelectorAll('.details, .question, .text'), state.search);
   return card;
+}
+
+// Marks every searched word inside these elements' text (DOM calls only, no innerHTML).
+function highlight(elements, search) {
+  const words = search.toLowerCase().split(/\s+/).filter(Boolean)
+    .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  if (!words.length) return;
+  const re = new RegExp(words.join('|'), 'gi');
+  for (const el of elements) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    for (const node of nodes) {
+      const s = node.nodeValue;
+      const found = [...s.matchAll(re)];
+      if (!found.length) continue;
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      for (const m of found) {
+        frag.append(s.slice(last, m.index), h('mark', 'hit', m[0]));
+        last = m.index + m[0].length;
+      }
+      frag.append(s.slice(last));
+      node.replaceWith(frag);
+    }
+  }
+}
+
+// The saved Markdown as plain text: no code fences, heading marks, bold/italic stars,
+// backticks or link addresses. Lists and line breaks stay.
+function plainText(md) {
+  return md
+    .split('\n')
+    .filter(line => !/^\s*```/.test(line))
+    .map(line => line.replace(/^(\s*)#{1,6}\s+/, '$1'))
+    .join('\n')
+    .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '$1')
+    .replace(/\*\*([\s\S]+?)\*\*/g, '$1')
+    .replace(/\*(?=\S)([^*\n]+?)\*/g, '$1')
+    .replace(/(`+)([\s\S]+?)\1/g, '$2')
+    .trim();
 }
 
 // ---------- Move menus ----------
@@ -739,8 +836,20 @@ $('search').addEventListener('input', e => {
   state.search = e.target.value.trim();
   render();
 });
+// "/" anywhere on the page puts the cursor in search (not while typing in a box).
+document.addEventListener('keydown', e => {
+  if (e.key !== '/' || e.ctrlKey || e.altKey || e.metaKey) return;
+  if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+  e.preventDefault();
+  $('search').focus();
+  $('search').select();
+});
 $('ai-filter').addEventListener('change', e => {
   state.ai = e.target.value;
+  render();
+});
+$('sort').addEventListener('change', e => {
+  state.sort = e.target.value;
   render();
 });
 $('rename').addEventListener('click', startRename);

@@ -25,7 +25,7 @@ folders, so one research topic can collect answers from several AIs.
 
 ## Planned
 
-- Library: sort and group by chat, highlight search matches, "/" to search, Copy as text or Markdown
+- A final check on every supported site
 
 ## Install (developer mode)
 
