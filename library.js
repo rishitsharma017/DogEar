@@ -593,23 +593,7 @@ function itemCard(item, projects, projectName, selectable) {
   tools.append(move, del);
   actions.append(tools);
 
-  // Copy menu: plain text (for anywhere) or Markdown (keeps code blocks, lists, links).
-  const copy = h('select', 'copy quiet');
-  copy.title = 'Copy the answer text';
-  const label = new Option('Copy', '');
-  copy.append(label, new Option('As plain text', 'text'), new Option('As Markdown', 'md'));
-  copy.addEventListener('change', async () => {
-    const how = copy.value;
-    copy.value = '';
-    try {
-      await navigator.clipboard.writeText(how === 'md' ? item.text : plainText(item.text));
-      label.textContent = 'Copied ✓';
-    } catch (e) {
-      label.textContent = 'Couldn’t copy';
-    }
-    setTimeout(() => { label.textContent = 'Copy'; }, 1500);
-  });
-  actions.append(copy);
+  actions.append(copyMenu(item));
 
   if (item.url) {
     // Right-click saves have no convId: just open the page they came from.
@@ -622,6 +606,87 @@ function itemCard(item, projects, projectName, selectable) {
   body.append(actions);
   if (state.search) highlight(card.querySelectorAll('.details, .question, .text'), state.search);
   return card;
+}
+
+// Copy button with a small menu of our own: plain text (for anywhere) or Markdown (keeps code
+// blocks, lists, links). Closes on a pick, Esc, or a click anywhere else.
+function copyMenu(item) {
+  const wrap = h('span', 'copy-wrap');
+  const button = h('button', 'quiet copy-btn');
+  const label = h('span', '', 'Copy');
+  button.append(label, chevronIcon());
+  button.title = 'Copy the answer text';
+  button.setAttribute('aria-haspopup', 'menu');
+  button.setAttribute('aria-expanded', 'false');
+
+  const menu = h('div', 'copy-menu');
+  menu.setAttribute('role', 'menu');
+  menu.hidden = true;
+  const choice = (name, hint, how) => {
+    const b = h('button', 'copy-choice');
+    b.setAttribute('role', 'menuitem');
+    b.append(h('span', 'copy-name', name), h('span', 'copy-hint', hint));
+    b.addEventListener('click', async () => {
+      close();
+      button.focus();
+      try {
+        await navigator.clipboard.writeText(how === 'md' ? item.text : plainText(item.text));
+        label.textContent = 'Copied ✓';
+      } catch (e) {
+        label.textContent = 'Couldn’t copy';
+      }
+      setTimeout(() => { label.textContent = 'Copy'; }, 1500);
+    });
+    return b;
+  };
+  menu.append(
+    choice('Plain text', 'No formatting marks', 'text'),
+    choice('Markdown', 'Keeps code, lists and links', 'md')
+  );
+
+  const close = () => {
+    menu.hidden = true;
+    button.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', outside, true);
+  };
+  const outside = e => {
+    if (!wrap.contains(e.target)) close();
+  };
+  button.addEventListener('click', () => {
+    if (!menu.hidden) return close();
+    menu.hidden = false;
+    button.setAttribute('aria-expanded', 'true');
+    document.addEventListener('click', outside, true);
+    menu.querySelector('button').focus();
+  });
+  wrap.addEventListener('keydown', e => {
+    if (menu.hidden) return;
+    const choices = [...menu.querySelectorAll('button')];
+    const at = choices.indexOf(document.activeElement);
+    if (e.key === 'Escape') {
+      close();
+      button.focus();
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const step = e.key === 'ArrowDown' ? 1 : -1;
+      choices[(at + step + choices.length) % choices.length].focus();
+    }
+  });
+
+  wrap.append(button, menu);
+  return wrap;
+}
+
+// A small down arrow for the Copy button (built with DOM calls).
+function chevronIcon() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', 'M4.5 6.5L8 10l3.5-3.5');
+  svg.append(path);
+  return svg;
 }
 
 // Marks every searched word inside these elements' text (DOM calls only, no innerHTML).
