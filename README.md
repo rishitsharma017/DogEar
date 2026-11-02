@@ -10,8 +10,9 @@
 </p>
 
 <p align="center">
-  <b>ChatGPT · Claude · Gemini · Perplexity · Grok</b><br>
-  <sub>plus a right-click “Save selection” on any website</sub>
+  <img src="docs/demo.gif" alt="DogEar demo: star an answer in Claude with a note, jump back to an older one with Alt+B, save from ChatGPT into the same project, then the Library with answers from five AIs, search and Copy as prompt" width="100%">
+  <br>
+  <sub>Save from Claude and ChatGPT into one project, jump back to any answer, then search and reuse it all from the Library.</sub>
 </p>
 
 ---
