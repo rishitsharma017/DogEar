@@ -3,7 +3,7 @@
   "name": "DogEar – Bookmarks and research projects for AI chats",
   "short_name": "DogEar",
   "version": "1.0.0",
-  "description": "Capture the answers that matter in ChatGPT, Claude, Gemini, Perplexity and Grok, then find, organise and build on them.",
+  "description": "Bookmark answers in ChatGPT, Claude, Gemini, Perplexity and Grok, jump back to them in long chats, and collect them into projects.",
   "permissions": ["storage", "unlimitedStorage", "contextMenus", "activeTab", "scripting", "downloads", "alarms", "offscreen"],
   "background": {
     "service_worker": "background.js"
