@@ -203,6 +203,7 @@ async function render() {
 
   renderSidebar(projects, items, trash);
   renderAiFilter(items);
+  renderSort();
 
   $('project-actions').hidden = !project;
   $('trash-actions').hidden = !inTrash || !trash.length;
@@ -482,11 +483,37 @@ function navRow(view, name, count) {
 
 // The AI filter lists only the AIs that have saved items.
 function renderAiFilter(items) {
-  const select = $('ai-filter');
   const ais = [...new Set(items.map(it => it.ai).filter(Boolean))].sort();
   if (state.ai && !ais.includes(state.ai)) state.ai = '';
-  select.replaceChildren(new Option('All AIs', ''), ...ais.map(ai => new Option(ai, ai)));
-  select.value = state.ai;
+  const choices = [{ label: 'All AIs', value: '' }, ...ais.map(ai => ({ label: ai, value: ai }))];
+  $('ai-filter').replaceChildren(fieldMenu(choices, state.ai, 'Show answers from one AI', value => {
+    state.ai = value;
+    render();
+  }));
+}
+
+const SORTS = [
+  { label: 'Newest first', value: 'newest' },
+  { label: 'Oldest first', value: 'oldest' },
+  { label: 'By AI', value: 'ai' },
+  { label: 'By chat', value: 'chat' }
+];
+
+function renderSort() {
+  $('sort').replaceChildren(fieldMenu(SORTS, state.sort, 'Order and group the answers', value => {
+    state.sort = value;
+    render();
+  }));
+}
+
+// A toolbar menu (AI filter, Sort): shows the current choice, bordered like the search box,
+// and marks that choice in its menu.
+function fieldMenu(choices, current, title, onPick) {
+  const now = choices.find(c => c.value === current) || choices[0];
+  const menu = dropMenu(now.label, title,
+    choices.map(c => ({ ...c, current: c.value === now.value })), onPick);
+  menu.wrap.classList.add('menu-field');
+  return menu.wrap;
 }
 
 function itemCard(item, projects, projectName, selectable) {
@@ -633,7 +660,7 @@ function dropMenu(text, title, choices, onPick) {
   menu.hidden = true;
   for (const c of choices) {
     if (c.divider) menu.append(h('div', 'menu-divider'));
-    const b = h('button', 'menu-choice' + (c.className ? ' ' + c.className : ''));
+    const b = h('button', 'menu-choice' + (c.className ? ' ' + c.className : '') + (c.current ? ' menu-current' : ''));
     b.type = 'button';
     b.setAttribute('role', 'menuitem');
     b.disabled = !!c.disabled;
@@ -666,7 +693,7 @@ function dropMenu(text, title, choices, onPick) {
     menu.classList.toggle('up', room < menu.offsetHeight + 12);
     button.setAttribute('aria-expanded', 'true');
     document.addEventListener('click', outside, true);
-    enabled()[0]?.focus();
+    (menu.querySelector('.menu-current:not(:disabled)') || enabled()[0])?.focus();
   });
   wrap.addEventListener('keydown', e => {
     if (menu.hidden) return;
@@ -926,14 +953,6 @@ document.addEventListener('keydown', e => {
   e.preventDefault();
   $('search').focus();
   $('search').select();
-});
-$('ai-filter').addEventListener('change', e => {
-  state.ai = e.target.value;
-  render();
-});
-$('sort').addEventListener('change', e => {
-  state.sort = e.target.value;
-  render();
 });
 $('rename').addEventListener('click', startRename);
 $('export').addEventListener('click', exportProject);

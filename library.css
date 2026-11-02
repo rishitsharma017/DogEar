@@ -328,6 +328,30 @@ button.quiet.danger:hover {
   background: var(--line);
 }
 
+/* The choice in use now (AI filter, Sort) */
+.menu-current {
+  background-color: var(--raised);
+}
+
+/* Toolbar menus (AI filter, Sort): bordered like the search box, plain choice names */
+.menu-field .menu-btn {
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.menu-field .menu-btn:hover,
+.menu-field .menu-btn[aria-expanded="true"] {
+  border-color: var(--line-strong);
+}
+
+.menu-field .menu-name {
+  font-weight: 400;
+}
+
+.menu-field .menu-current .menu-name {
+  font-weight: 600;
+}
+
 .menu-new .menu-name {
   color: var(--accent-text);
 }
