@@ -153,7 +153,9 @@ In order. Not part of v1, don't build early.
    Done: weekly automatic backup (switchable) to Downloads/AI Chat Bookmarks, each backup its own file,
    newest 5 kept; "Back up now"; Restore adds (never replaces, skips duplicates) with Undo.
    All in the Library sidebar's Backup menu
-2. "Copy project as prompt": a project as one message to paste into any AI to continue the research
+2. [x] "Copy project as prompt": a project as one message to paste into any AI to continue the research.
+   Done: "Copy as prompt" button in a project's header (projectPrompt in common.js): a short brief, then every
+   answer oldest first with AI, chat, date and question; the note shows the length (warns past 30,000 words)
 3. Notes on a bookmark: short label shown in the panel instead of the first line
 4. Scrollbar markers: gold ticks on the chat's scrollbar where starred answers are; click to jump
 5. Alt+↑ / Alt+↓: previous / next starred answer in this chat

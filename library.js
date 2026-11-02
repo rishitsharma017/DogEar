@@ -909,6 +909,24 @@ async function exportProject() {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+// The whole project as one message for any AI (projectPrompt in common.js). Says how long it
+// is, since some AIs cut off very long messages.
+async function copyProjectPrompt() {
+  const project = await currentProject();
+  if (!project) return;
+  const prompt = await projectPrompt(project.id);
+  try {
+    await navigator.clipboard.writeText(prompt);
+  } catch (e) {
+    return showUndo('Couldn’t copy.', null);
+  }
+  const words = prompt.split(/\s+/).filter(Boolean).length;
+  const size = words < 1000 ? `${words} words` : `about ${Math.round(words / 1000).toLocaleString()},000 words`;
+  showUndo(words > 30000
+    ? `Copied, ${size}. Some AIs may cut off a message this long.`
+    : `Copied, ${size}. Paste it into any AI.`, null);
+}
+
 async function removeProject() {
   const project = await currentProject();
   if (!project) return;
@@ -958,6 +976,7 @@ document.addEventListener('keydown', e => {
 });
 $('rename').addEventListener('click', startRename);
 $('export').addEventListener('click', exportProject);
+$('copy-prompt').addEventListener('click', copyProjectPrompt);
 $('delete').addEventListener('click', removeProject);
 $('select-all').addEventListener('change', e => setAllSelected(e.target.checked));
 $('bulk-delete').addEventListener('click', deleteSelected);

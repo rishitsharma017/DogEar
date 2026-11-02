@@ -424,3 +424,32 @@ async function exportProjectMarkdown(projectId) {
   }
   return lines.join('\n');
 }
+
+// A project as one message to paste into any AI and carry on the research: a short brief,
+// then every answer (oldest first) with the AI, the chat, the date and the question asked.
+// Right-click saves (no AI) are listed as web clips.
+async function projectPrompt(projectId) {
+  const { projects, items } = await getData();
+  const project = projects.find(p => p.id === projectId);
+  if (!project) return '';
+  const list = items
+    .filter(it => it.projectId === projectId)
+    .sort((a, b) => a.createdAt - b.createdAt);
+  const ais = [...new Set(list.map(it => it.ai || 'web clips'))];
+  const from = ais.length > 1 ? `${ais.slice(0, -1).join(', ')} and ${ais[ais.length - 1]}` : ais[0] || '';
+  const n = list.length;
+  const day = ms => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const lines = [
+    `I'm researching "${project.name}". Below ${n === 1 ? 'is 1 answer' : `are ${n} answers`} I collected from ${from}.`,
+    'Read them, then help me continue this research. Point out where they disagree or where something looks wrong.',
+    ''
+  ];
+  list.forEach((it, i) => {
+    const where = [it.ai || 'Web clip', it.chatTitle && `"${it.chatTitle}"`, day(it.createdAt)].filter(Boolean);
+    lines.push(`--- ${i + 1}. ${where.join(' · ')} ---`);
+    if (it.question) lines.push(`Question: ${it.question}`);
+    lines.push(it.question ? 'Answer:' : 'Text:', it.text, '');
+  });
+  return lines.join('\n').trim() + '\n';
+}
