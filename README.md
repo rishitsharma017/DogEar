@@ -202,6 +202,10 @@ wait until an answer has finished writing.
 - [ ] Chrome Web Store release
 - [ ] Maybe: save part of an answer, compare AIs side by side, tags
 
+## Privacy
+
+DogEar has no server and sends nothing anywhere: see the [privacy policy](PRIVACY.md).
+
 ## License
 
 [MIT](LICENSE) © Rishit Sharma

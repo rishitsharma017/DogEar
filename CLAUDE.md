@@ -43,6 +43,8 @@ Two use cases. Every decision should serve these:
   one ear's tip folded like a page corner); toolbar16/24/32.png from toolbar.svg (no tile, cropped tight,
   since a tile looked too small in the toolbar)
 - docs/: images for the GitHub README (banner.svg, screenshots/), not loaded by the extension
+- PRIVACY.md: the privacy policy the Chrome Web Store links to (keep it true when storage or
+  permissions change)
 - PRODUCT.md (product record), DESIGN.md (design system: colours, type, rules) and .impeccable/
   (design briefs, design.json): design docs for the /impeccable skill, not loaded by the extension
 
