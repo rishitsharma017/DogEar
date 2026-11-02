@@ -76,7 +76,8 @@
    paper or charcoal (acb-dark, from the Library's Dark mode switch), ink text, a red guide
    word over a rule, hairline rows, gilt only for what's saved or new. */
 .acb-picker,
-.acb-panel {
+.acb-panel,
+.acb-panel-menu {
   --acb-bg: #ffffff;
   --acb-raised: #f6f4ef;
   --acb-text: #1c1b18;
@@ -94,7 +95,8 @@
 }
 
 .acb-picker.acb-dark,
-.acb-panel.acb-dark {
+.acb-panel.acb-dark,
+.acb-panel-menu.acb-dark {
   --acb-bg: #2f2d29;
   --acb-raised: #3a3832;
   --acb-text: #ece7dc;
@@ -302,26 +304,134 @@
   fill: currentColor;
 }
 
-.acb-panel-select {
+/* "This chat" / a project: opens our own menu (.acb-panel-menu) */
+.acb-panel-view {
+  all: unset;
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 8px;
   border: 1px solid var(--acb-line);
   border-radius: 6px;
   background: var(--acb-raised);
+  color: var(--acb-text);
   font-weight: 600;
   cursor: pointer;
+  transition: border-color 0.12s ease-out;
 }
 
-.acb-panel-select:focus-visible,
+.acb-panel-view:hover,
+.acb-panel-view[aria-expanded="true"] {
+  border-color: var(--acb-muted);
+}
+
+.acb-panel-view-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acb-panel-view svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--acb-muted);
+  transition: transform 0.12s ease-out;
+}
+
+.acb-panel-view[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.acb-panel-view:focus-visible,
 .acb-panel-close:focus-visible {
   outline: 2px solid var(--acb-gilt);
   outline-offset: 1px;
 }
 
-.acb-panel-select option {
+/* The menu itself: on the page, above the panel */
+.acb-panel-menu {
+  all: initial;
+  position: fixed;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  box-sizing: border-box;
+  overflow-y: auto;
   background: var(--acb-bg);
   color: var(--acb-text);
+  border: 1px solid var(--acb-line);
+  border-radius: 8px;
+  box-shadow: var(--acb-shadow);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  scrollbar-color: var(--acb-line) transparent;
+  scrollbar-width: thin;
+}
+
+.acb-panel-menu * {
+  box-sizing: border-box;
+  font: inherit;
+  color: inherit;
+}
+
+.acb-panel-menu-item {
+  all: unset;
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.acb-panel-menu-item:hover,
+.acb-panel-menu-item:focus-visible {
+  background: var(--acb-hover);
+}
+
+.acb-panel-menu-item:focus-visible {
+  outline: 2px solid var(--acb-gilt);
+  outline-offset: -2px;
+}
+
+/* The view shown now */
+.acb-panel-menu-item.acb-current {
+  background: var(--acb-raised);
+  font-weight: 600;
+}
+
+.acb-panel-menu-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acb-panel-menu-count {
+  color: var(--acb-muted);
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Between "This chat" and the projects */
+.acb-panel-menu-line {
+  flex-shrink: 0;
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--acb-line);
 }
 
 .acb-panel-close {

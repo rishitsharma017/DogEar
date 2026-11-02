@@ -1192,6 +1192,7 @@ const panel = { box: null, view: 'chat', shownView: null, shownConv: null, listS
 
 function togglePanel() {
   if (panel.box) {
+    closePanelMenu();
     panel.box.remove();
     panel.box = null;
     return;
@@ -1208,6 +1209,105 @@ function togglePanel() {
   Promise.all([renderPanel(), getPanelPos()]).then(([, pos]) => {
     if (pos) placePanel(pos.left, pos.top);
   }).finally(() => { box.style.visibility = ''; });
+}
+
+// The panel's view switch ("This chat" or a project) with a menu of our own, like the
+// Library's (Chrome's own dropdown can't take the panel's look). The menu opens on the page
+// under the button, not inside the panel, so the panel's edge never cuts it off. Closes on a
+// pick, Esc, a click anywhere else, or when the panel redraws or closes.
+let panelMenuClose = null;
+
+function closePanelMenu() {
+  if (panelMenuClose) panelMenuClose();
+}
+
+function panelViewButton(choices, current, onPick) {
+  const now = choices.find(c => c.value === current) || choices[0];
+  const button = h('button', 'acb-panel-view');
+  button.type = 'button';
+  button.title = 'Show this chat or a project';
+  button.setAttribute('aria-haspopup', 'menu');
+  button.setAttribute('aria-expanded', 'false');
+  button.append(h('span', 'acb-panel-view-name', now.label), chevronIcon());
+
+  let menu = null;
+  const close = () => {
+    if (!menu) return;
+    menu.remove();
+    menu = null;
+    panelMenuClose = null;
+    button.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('mousedown', outside, true);
+  };
+  const outside = e => {
+    if (menu && !menu.contains(e.target) && !button.contains(e.target)) close();
+  };
+  button.addEventListener('click', () => {
+    if (menu) return close();
+    menu = h('div', 'acb-ui acb-panel-menu');
+    menu.classList.toggle('acb-dark', acb.theme === 'dark');
+    menu.setAttribute('role', 'menu');
+    choices.forEach((c, n) => {
+      if (n === 1) menu.append(h('div', 'acb-panel-menu-line'));
+      const item = h('button', 'acb-panel-menu-item');
+      item.type = 'button';
+      item.setAttribute('role', 'menuitem');
+      item.classList.toggle('acb-current', c.value === now.value);
+      item.append(h('span', 'acb-panel-menu-name', c.label), h('span', 'acb-panel-menu-count', String(c.count)));
+      item.addEventListener('click', () => {
+        close();
+        button.focus();
+        onPick(c.value);
+      });
+      menu.append(item);
+    });
+    // Keys stay in the menu (the site never sees them): ↑/↓ move, Esc closes.
+    menu.addEventListener('keydown', e => {
+      e.stopPropagation();
+      const list = [...menu.querySelectorAll('.acb-panel-menu-item')];
+      const at = list.indexOf(document.activeElement);
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+        button.focus();
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const step = e.key === 'ArrowDown' ? 1 : -1;
+        list[(at + step + list.length) % list.length].focus();
+      }
+    });
+    document.body.append(menu);
+    // Under the button, as wide as it; above it when there's no room below.
+    const r = button.getBoundingClientRect();
+    const width = Math.max(r.width, 200);
+    menu.style.width = width + 'px';
+    menu.style.left = Math.max(8, Math.min(r.left, innerWidth - width - 8)) + 'px';
+    const below = innerHeight - r.bottom - 12;
+    if (below >= Math.min(menu.offsetHeight, 200)) {
+      menu.style.top = r.bottom + 4 + 'px';
+      menu.style.maxHeight = Math.min(320, below) + 'px';
+    } else {
+      menu.style.bottom = innerHeight - r.top + 4 + 'px';
+      menu.style.maxHeight = Math.min(320, r.top - 12) + 'px';
+    }
+    button.setAttribute('aria-expanded', 'true');
+    panelMenuClose = close;
+    document.addEventListener('mousedown', outside, true);
+    (menu.querySelector('.acb-current') || menu.querySelector('.acb-panel-menu-item')).focus();
+  });
+  return button;
+}
+
+// A small down arrow for the panel's view switch (built with DOM calls).
+function chevronIcon() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', 'M4.5 6.5L8 10l3.5-3.5');
+  svg.append(path);
+  return svg;
 }
 
 // Moves the panel, keeping its top bar inside the window. Returns where it ended up.
@@ -1278,15 +1378,17 @@ async function renderPanel() {
   if (!box) return;
   if (panel.view !== 'chat' && !projects.some(p => p.id === panel.view)) panel.view = 'chat';
 
-  const select = h('select', 'acb-panel-select');
-  select.append(new Option('This chat', 'chat'));
+  closePanelMenu();
+  const choices = [{
+    label: 'This chat',
+    value: 'chat',
+    count: items.filter(it => acb.convId && it.convId === acb.convId).length
+  }];
   for (const p of [...projects].sort((a, b) => a.name.localeCompare(b.name))) {
-    const count = items.filter(it => it.projectId === p.id).length;
-    select.append(new Option(`${p.name} (${count})`, p.id));
+    choices.push({ label: p.name, value: p.id, count: items.filter(it => it.projectId === p.id).length });
   }
-  select.value = panel.view;
-  select.addEventListener('change', () => {
-    panel.view = select.value;
+  const select = panelViewButton(choices, panel.view, value => {
+    panel.view = value;
     renderPanel();
   });
 
@@ -1373,7 +1475,7 @@ if (acb.adapter) {
     // Dark mode switched in the Library: an open picker or panel follows right away.
     if (changes.theme) {
       acb.theme = changes.theme.newValue === 'dark' ? 'dark' : 'light';
-      for (const el of document.querySelectorAll('.acb-picker, .acb-panel')) {
+      for (const el of document.querySelectorAll('.acb-picker, .acb-panel, .acb-panel-menu')) {
         el.classList.toggle('acb-dark', acb.theme === 'dark');
       }
     }
