@@ -63,7 +63,8 @@ own bookmarks, but only within themselves.
 ## Brand Commitments
 
 - Gold is the signature colour (binding).
-- The name "AI Chat Bookmarks" and the ★ symbol are current, not binding.
+- The name is DogEar (renamed from "AI Chat Bookmarks"; a dog-ear is a page corner folded to find it again).
+  The logo is a brown dog with one ear's tip folded like a page corner (icons/logo.svg).
 
 ## Evidence on Hand
 

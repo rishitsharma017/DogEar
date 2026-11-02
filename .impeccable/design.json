@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-11-02T00:00:00Z",
-  "title": "Design System: AI Chat Bookmarks",
+  "title": "Design System: DogEar",
   "extensions": {
     "colorMeta": {
       "india-paper": { "role": "neutral", "displayName": "India Paper", "canonical": "#ffffff", "tonalRamp": ["#2f2d29", "#45423c", "#6d6a62", "#aea79a", "#d0cabd", "#e6e2d8", "#f6f4ef", "#ffffff"] },

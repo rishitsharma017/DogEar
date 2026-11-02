@@ -11,7 +11,7 @@ chrome.action.onClicked.addListener(() => {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: 'save-selection',
-    title: 'Save selection to AI Chat Bookmarks',
+    title: 'Save selection to DogEar',
     contexts: ['selection']
   });
 });
@@ -32,7 +32,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }, { remember: false });
     flashBadge('✓', '#2e7d32', tab);
   } catch (err) {
-    console.error('AI Chat Bookmarks: save failed', err);
+    console.error('DogEar: save failed', err);
     flashBadge('!', '#b3261e', tab);
   }
 });
@@ -88,7 +88,7 @@ chrome.commands.onCommand.addListener(async command => {
 // ---------- Weekly backup ----------
 
 // Every week (unless switched off in the Library) a backup file goes to
-// Downloads/AI Chat Bookmarks/backup-<date>-<time>.json, so saved answers survive removing the
+// Downloads/DogEar/backup-<date>-<time>.json, so saved answers survive removing the
 // extension, a Chrome reset or a new computer. Checked every 6 h and when Chrome starts;
 // "Back up now" in the Library makes one straight away.
 // Every backup is its own file and the newest 5 are kept, so a backup made right after a
@@ -106,7 +106,7 @@ chrome.alarms.onAlarm.addListener(async alarm => {
   if (alarm.name !== 'backup') return;
   const { backupAt, backupAuto } = await getBackupInfo();
   if (!backupAuto || (backupAt && Date.now() - backupAt < BACKUP_EVERY)) return;
-  saveBackup().catch(err => console.error('AI Chat Bookmarks: backup failed', err));
+  saveBackup().catch(err => console.error('DogEar: backup failed', err));
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -138,7 +138,7 @@ async function writeBackup() {
     const url = await fileLink(JSON.stringify(backup));
     id = await chrome.downloads.download({
       url,
-      filename: `AI Chat Bookmarks/backup-${stamp}.json`,
+      filename: `DogEar/backup-${stamp}.json`,
       conflictAction: 'uniquify', // two in the same minute: "backup-… (1).json"
       saveAs: false
     });

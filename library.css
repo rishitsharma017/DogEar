@@ -384,19 +384,34 @@ button.link:hover {
   border-right: 1px solid var(--side-line);
 }
 
+/* The name is set like a book title (a system serif, nothing bundled), the one place the
+   Library isn't in system-ui: it's a logo, not a heading. */
 .brand {
-  padding: 0 10px 24px;
-  font-weight: 650;
-  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 0 8px 18px;
+  font-family: "Sitka Heading", "Iowan Old Style", Charter, Georgia, serif;
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1;
   letter-spacing: -0.01em;
 }
 
-.brand-star {
-  width: 14px;
-  height: 14px;
-  margin-right: 4px;
-  vertical-align: -1px;
-  fill: var(--side-gilt);
+/* The name sits a little below the middle of the face, level with the nose and mouth: the
+   12px under the dog drops the name 6px (the 18px padding above takes it back, so the list
+   doesn't move), and the -1px pulls it into the picture's own empty edge so the "D" almost
+   touches the cheek. */
+.brand-logo {
+  width: 56px;
+  height: 56px;
+  margin: 0 -1px 12px 0;
+}
+
+/* The logo's one gold accent, like the gilt tabs. Only here, never in the name elsewhere. */
+.brand-dot {
+  color: var(--side-gilt);
 }
 
 .nav-label {

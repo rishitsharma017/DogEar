@@ -1,4 +1,4 @@
-# AI Chat Bookmarks
+# DogEar (formerly AI Chat Bookmarks)
 
 ## Goal
 Chrome extension (Manifest V3) that saves answers from AI chats into user-made
@@ -39,7 +39,10 @@ Two use cases. Every decision should serve these:
   (a background service worker can't make file links itself)
 - library.html / library.js / library.css
 - content.css: all classes prefixed `acb-` so they never clash with the sites
-- icons/: extension icons (16, 48, 128 px)
+- icons/: extension icons (16, 48, 128 px) made from logo.svg (the DogEar dog: brown on charcoal,
+  one ear's tip folded like a page corner); toolbar16/24/32.png from toolbar.svg (no tile, cropped tight,
+  since a tile looked too small in the toolbar)
+- docs/: images for the GitHub README (banner.svg, screenshots/), not loaded by the extension
 - PRODUCT.md (product record), DESIGN.md (design system: colours, type, rules) and .impeccable/
   (design briefs, design.json): design docs for the /impeccable skill, not loaded by the extension
 
@@ -62,7 +65,7 @@ background.js loads common.js with `importScripts`. library.html loads it with a
 - panelPos: { left, top } where the user dragged the Alt+B panel (null = default top-right)
 - theme: 'light' | 'dark', the look the user picked with the Library's "Dark mode" switch (default light)
 - backupAt, backupFiles: [{ id }], backupAuto: when the last backup was saved, the backup downloads kept
-  (newest 5, each its own file: Downloads/AI Chat Bookmarks/backup-<date>-<time>.json), and whether the
+  (newest 5, each its own file: Downloads/DogEar/backup-<date>-<time>.json), and whether the
   weekly backup is on (default on; the Library's Backup menu switches it)
 - Store the actual answer text, not just a link, so saved items survive chat deletion
 - text is simple markdown: code blocks, lists, headings, bold, links. Everything else becomes plain text
@@ -155,7 +158,7 @@ Build order. One step at a time; Claude is the first site.
 ## Later ideas (v2, only after step 15)
 In order. Not part of v1, don't build early.
 1. [x] Backup / restore: download all data as one file, load it back (data only lives in Chrome).
-   Done: weekly automatic backup (switchable) to Downloads/AI Chat Bookmarks, each backup its own file,
+   Done: weekly automatic backup (switchable) to Downloads/DogEar, each backup its own file,
    newest 5 kept; "Back up now"; Restore adds (never replaces, skips duplicates) with Undo.
    All in the Library sidebar's Backup menu
 2. [x] "Copy project as prompt": a project as one message to paste into any AI to continue the research.

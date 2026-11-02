@@ -1042,7 +1042,7 @@ $('undo-btn').addEventListener('click', async () => {
 async function renderBackupStatus() {
   const { backupAt, backupAuto } = await getBackupInfo();
   const menu = dropMenu('Backup', 'Back up or restore your saved answers', [
-    { label: 'Back up now', hint: 'Saves a file to Downloads › AI Chat Bookmarks', value: 'now' },
+    { label: 'Back up now', hint: 'Saves a file to Downloads › DogEar', value: 'now' },
     { label: 'Restore backup…', hint: 'Adds the answers from a backup file', value: 'restore' },
     {
       label: 'Weekly backup',
@@ -1067,7 +1067,7 @@ async function backUpNow() {
   showUndo('Backing up…', null);
   const result = await chrome.runtime.sendMessage({ type: 'backup-now' })
     .catch(err => ({ ok: false, error: err.message }));
-  if (result && result.ok) showUndo('Backup saved in Downloads › AI Chat Bookmarks.', null);
+  if (result && result.ok) showUndo('Backup saved in Downloads › DogEar.', null);
   else if (result && result.error === 'Nothing saved yet') showUndo('Nothing to back up yet.', null);
   else showUndo('Couldn’t save the backup.', null);
 }
@@ -1083,7 +1083,7 @@ $('restore-file').addEventListener('change', async e => {
   } catch (err) {
     backup = null;
   }
-  if (!isBackup(backup)) return showUndo('That file isn’t an AI Chat Bookmarks backup.', null);
+  if (!isBackup(backup)) return showUndo('That file isn’t a DogEar backup.', null);
   const added = await restoreBackup(backup);
   const n = added.items.length;
   const p = added.projects.length;

@@ -1,5 +1,5 @@
 ---
-name: AI Chat Bookmarks
+name: DogEar
 description: Saved AI answers, found the way a thumb finds a letter in a dictionary.
 colors:
   india-paper: "#ffffff"
@@ -104,7 +104,7 @@ components:
     padding: "12px"
 ---
 
-# Design System: AI Chat Bookmarks
+# Design System: DogEar
 
 ## Overview
 
@@ -152,6 +152,7 @@ Ink on paper (or paper on leather), with one red voice for sections and gilt hel
 **Display Font:** system-ui (Segoe UI on Windows)
 **Body Font:** system-ui
 **Label/Mono Font:** ui-monospace (Cascadia Mono, Consolas) for code in saved answers
+**Wordmark:** the sidebar's "DogEar" only: a system serif (Sitka Heading on Windows, then Iowan Old Style, Charter, Georgia), 600, 28px, right of the 56px dog, a little below the middle of its face (level with the nose and mouth, touching distance), ending in a gilt full stop (sidebar only), centred in the sidebar. Set like a book title; it's a logo, not a heading, so the rule below still holds
 
 **Character:** Plain and legible. The dictionary feeling comes from structure (guide words, rules, tabs), not from a display face.
 

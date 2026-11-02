@@ -301,9 +301,11 @@ function setTheme(theme) {
 
 // ---------- Backup ----------
 // A backup is one JSON file with every project, saved answer and Recently deleted entry.
-// background.js saves one to Downloads/AI Chat Bookmarks/ every week (and on "Back up now");
+// background.js saves one to Downloads/DogEar/ every week (and on "Back up now");
 // the Library's "Restore backup…" adds one back.
 
+// The label inside every backup file. Kept from the extension's first name (AI Chat Bookmarks) so
+// backups made before the rename to DogEar still restore.
 const BACKUP_APP = 'ai-chat-bookmarks';
 
 async function makeBackup() {

@@ -1,18 +1,19 @@
 {
   "manifest_version": 3,
-  "name": "AI Chat Bookmarks",
+  "name": "DogEar – Bookmarks and research projects for AI chats",
+  "short_name": "DogEar",
   "version": "0.1.0",
-  "description": "Bookmark answers in AI chats, jump back to them, and collect them into project folders.",
+  "description": "Capture the answers that matter in ChatGPT, Claude, Gemini, Perplexity and Grok, then find, organise and build on them.",
   "permissions": ["storage", "unlimitedStorage", "contextMenus", "activeTab", "scripting", "downloads", "alarms", "offscreen"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Open AI Chat Bookmarks library",
+    "default_title": "Open the DogEar Library",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "icons/toolbar16.png",
+      "24": "icons/toolbar24.png",
+      "32": "icons/toolbar32.png"
     }
   },
   "icons": {

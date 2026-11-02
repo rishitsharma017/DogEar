@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="15 17 98 98">
+    <defs>
+      <linearGradient id="flap-b2" x1="0" y1="0" x2=".25" y2="1">
+        <stop offset="0" stop-color="#f3dfbd"/><stop offset="1" stop-color="#d9b88a"/>
+      </linearGradient>
+      <filter id="soft-b2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6"/></filter>
+    </defs>
+    
+    <!-- left ear -->
+    <path d="M34 64 L 36 20 L 60 52 Z" fill="#b5804e" stroke="#b5804e" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M40 56 L 40.5 32 L 53 51 Z" fill="#87552c" stroke="#87552c" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M42 50 L 44 42 M46 52 L 47.5 44" fill="none" stroke="#b5804e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+    <!-- right ear below the crease (its top is the rounded bend) -->
+    <path d="M94 64 L 92.6 33 Q 86 34.2 79 37.3 L 68 52 Z" fill="#b5804e" stroke="#b5804e" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M88 57 L 88.4 41 Q 84 41.6 81.5 43 L 75 51 Z" fill="#87552c" stroke="#87552c" stroke-width="2" stroke-linejoin="round"/>
+    <!-- cheek tufts, head, lit facet, forehead tuft, blaze -->
+    <path d="M36 78 L 23 93 L 42 90 Z" fill="#b5804e" stroke="#b5804e" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M30 86 L 22 98 L 38 94 Z" fill="#c8945f" stroke="#c8945f" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M92 78 L 105 93 L 86 90 Z" fill="#b5804e" stroke="#b5804e" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M98 86 L 106 98 L 90 94 Z" fill="#b5804e" stroke="#b5804e" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M36 54 H 92 L 99 82 L 64 110 L 29 82 Z" fill="#b5804e" stroke="#b5804e" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M36 54 H 64 V 110 L 29 82 Z" fill="#c8945f"/>
+    <path d="M54 53 L 58 45 L 62 52 L 66 44 L 70 52 L 74 46 L 76 53 Z" fill="#b5804e" stroke="#b5804e" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M54 53 L 58 45 L 62 52 L 64 48 V 53 Z" fill="#c8945f"/>
+    <path d="M64 56 L 69 68 L 64 82 L 59 68 Z" fill="#d4a271"/>
+    <!-- the dog-ear: soft shadow, the curved flap with its shaded underside, the bend along the crease -->
+    <path d="M79 37.3 Q 86 34.2 92.6 33 C 92.4 41, 89.6 49, 85.6 55.2 C 84.6 56.8, 82.6 56.6, 82.2 54.8 C 81.2 48.6, 80.4 42.6, 79 37.3 Z" fill="#000" opacity=".35" filter="url(#soft-b2)" transform="translate(1.6 2.6)"/>
+    <path d="M79 37.3 Q 86 34.2 92.6 33 C 92.4 41, 89.6 49, 85.6 55.2 C 84.6 56.8, 82.6 56.6, 82.2 54.8 C 81.2 48.6, 80.4 42.6, 79 37.3 Z" fill="url(#flap-b2)"/>
+    <path d="M80.6 40 C 81.6 45, 82.4 50, 83.2 54" fill="none" stroke="#000" stroke-opacity=".12" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M79 37.3 Q 86 34.2 92.6 33" fill="none" stroke="#cf9b66" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M79 37.3 Q 86 34.2 92.6 33" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1" stroke-linecap="round" transform="translate(0 .8)"/>
+    <!-- fur strokes -->
+    <path d="M44 58 L 47 55 M80 58 L 83 55 M57 61 L 59 58 M71 61 L 69 58" fill="none" stroke="#8a5a31" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+    <path d="M37 72 L 32 74 M36 78 L 31 81 M91 72 L 96 74 M92 78 L 97 81" fill="none" stroke="#8a5a31" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+    <!-- brows and eyes -->
+    <ellipse cx="48" cy="63" rx="4.6" ry="2.4" transform="rotate(14 48 63)" fill="#ecd2a8"/>
+    <ellipse cx="80" cy="63" rx="4.6" ry="2.4" transform="rotate(-14 80 63)" fill="#ecd2a8"/>
+    <circle cx="50" cy="72" r="5.8" fill="#2a1d14"/><circle cx="51.9" cy="70.1" r="1.8" fill="#fff"/><circle cx="48.4" cy="74.2" r=".8" fill="#fff" opacity=".7"/><circle cx="78" cy="72" r="5.8" fill="#2a1d14"/><circle cx="79.9" cy="70.1" r="1.8" fill="#fff"/><circle cx="76.4" cy="74.2" r=".8" fill="#fff" opacity=".7"/>
+    <!-- muzzle, whisker dots, nose, tongue, smile -->
+    <path d="M48 86 H 80 L 64 104 Z" fill="#fbf6ec" stroke="#fbf6ec" stroke-width="7" stroke-linejoin="round"/>
+    <g fill="#2a1d14" opacity=".45"><circle cx="54" cy="91" r=".95"/><circle cx="56" cy="94.5" r=".95"/><circle cx="52" cy="94" r=".95"/><circle cx="74" cy="91" r=".95"/><circle cx="72" cy="94.5" r=".95"/><circle cx="76" cy="94" r=".95"/></g>
+    <path d="M57 84 H 71 L 64 92 Z" fill="#2a1d14" stroke="#2a1d14" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M60.5 85.5 H 64" stroke="#fff" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M60.5 97.5 C 60.5 105, 67.5 105, 67.5 97.5 Z" fill="#f0927f"/>
+    <path d="M64 98 V 102" stroke="#d26f5d" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M64 92 V 96 M64 96 C 61.5 99, 57.5 99, 55.5 96 M64 96 C 66.5 99, 70.5 99, 72.5 96" fill="none" stroke="#2a1d14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>
+    <path d="M60 105 L 64 108 L 68 105" fill="none" stroke="#8a5a31" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+  </svg>
