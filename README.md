@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="DogEar demo: star an answer in Claude with a note, jump back to an older one with Alt+B, save from ChatGPT into the same project, then the Library with answers from five AIs, search and Copy as prompt" width="100%">
+  <img src="docs/demo.gif" alt="DogEar demo: a final-year project on home batteries. Claude's comparison is starred with a note, Alt+B jumps back to an older answer, ChatGPT's sizing maths goes into the same project, and the Library shows each AI's best answers (Perplexity with sources, Gemini's paper summary), then search and Copy as prompt" width="100%">
   <br>
-  <sub>Save from Claude and ChatGPT into one project, jump back to any answer, then search and reuse it all from the Library.</sub>
+  <sub>One research project, each AI for what it does best: Claude to explain, ChatGPT for the maths, Perplexity for sources, all in one Library.</sub>
 </p>
 
 ---
