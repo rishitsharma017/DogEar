@@ -25,8 +25,7 @@ back to them later, even in a 400-message chat or a chat you closed last week. S
 go into your own **projects**, so one research topic can collect the best answers from ChatGPT,
 Claude, Gemini, Perplexity and Grok side by side.
 
-<!-- Screenshots: docs/screenshots/*.png (1280 px wide works well).
-     Hidden until the screenshots exist: remove this comment's start and its end after </table>.
+<!-- Screenshots: docs/screenshots/*.png, 1280×800 at 2× (made from demo data) -->
 <table>
   <tr>
     <td width="50%"><img src="docs/screenshots/star-menu.png" alt="The ☆ under an answer opens a small save menu"></td>
@@ -43,7 +42,6 @@ Claude, Gemini, Perplexity and Grok side by side.
     <td colspan="2" align="center"><sub><b>The Library</b>: all your projects, searchable, with dictionary-style index tabs</sub></td>
   </tr>
 </table>
--->
 
 ## Features
 

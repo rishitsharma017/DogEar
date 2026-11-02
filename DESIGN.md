@@ -180,7 +180,7 @@ Flat by default. Depth comes from tonal layers (paper, raised, sidebar) and rule
 
 ### Shadow Vocabulary
 - **Popup, light** (`box-shadow: 0 12px 32px rgba(28,27,24,0.18), 0 2px 6px rgba(28,27,24,0.08)`): picker and panel over a chat.
-- **Popup, dark** (`box-shadow: 0 14px 36px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.25)`): the same in dark mode.
+- **Popup, dark** (`box-shadow: 0 0 0 1px rgba(236,231,220,0.16), 0 14px 36px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.25)`): the same in dark mode, plus a faint light edge, because a dark shadow vanishes on a dark chat page. A gilt glow was tried and dropped: too loud for the quiet look, and muddy on light sites.
 - **Undo bar** (`box-shadow: 0 8px 28px rgba(28,27,24,0.3)`).
 
 ### Named Rules
