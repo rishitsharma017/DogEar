@@ -24,6 +24,14 @@
     "toggle-panel": {
       "suggested_key": { "default": "Alt+B" },
       "description": "Show or hide the bookmarks panel"
+    },
+    "prev-star": {
+      "suggested_key": { "default": "Alt+Up" },
+      "description": "Jump to the previous starred answer in this chat"
+    },
+    "next-star": {
+      "suggested_key": { "default": "Alt+Down" },
+      "description": "Jump to the next starred answer in this chat"
     }
   },
   "content_scripts": [

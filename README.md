@@ -22,11 +22,18 @@ folders, so one research topic can collect answers from several AIs.
 - **Right-click "Save selection"** on any website: the selected text goes into **Inbox**.
 - **Light and dark look.** A "Dark mode" switch in the Library changes the Library, the save
   picker and the panel together.
+- **Alt+↑ / Alt+↓** jump to the previous / next starred answer in the chat.
+- **Notes.** Add a short note to any answer from the ☆ menu. It shows under the answer in the
+  chat, in the panel and in the Library, and search finds it.
+- **Copy as prompt.** Copy a whole project as one message to paste into any AI and carry on
+  the research.
+- **Automatic backup.** Every week a backup file goes to *Downloads › AI Chat Bookmarks*
+  (the newest 5 are kept); **Restore backup…** in the Library adds one back.
+- **Maths** in answers is saved as readable text, e.g. `x = (−b ± √(b^2 − 4ac))/(2a)`.
 
 ## Planned
 
-- Backup and restore (download all saved data as one file, load it back)
-- "Copy project as prompt", notes on a bookmark, and more
+- Nothing big right now. Ideas: save part of an answer, compare AIs side by side, tags
 
 ## Install (developer mode)
 

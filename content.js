@@ -1281,6 +1281,45 @@ async function sweep(box, item, token, direction, limit, deadline) {
   return null;
 }
 
+// Alt+↓ / Alt+↑: jump to the next / previous starred answer in this chat (dir 1 / -1).
+// Pressed again without scrolling in between: the one after the last jump. Otherwise counted
+// from what's on screen: the first star starting below the top of the screen, or the last
+// one above it. Answers are put in chat order by their distance from the end of the chat
+// (measured now if they're on the page, else the saved hint).
+const starStep = { itemId: null, scrollTop: null };
+
+function stepStar(dir) {
+  const items = acb.saved.filter(it => it.convId === acb.convId);
+  if (!items.length) return toast('No starred answers in this chat yet');
+  const first = getMessages(acb.adapter)[0];
+  const box = first ? scrollBoxOf(first.el) : document.scrollingElement;
+
+  // Distance from the end of the chat (bigger = higher up).
+  const fromEnd = it => {
+    const el = findMessage(it);
+    if (el) return fromEndOf(el);
+    if (typeof it.fromEnd === 'number') return it.fromEnd;
+    if (typeof it.pos === 'number') return (1 - it.pos) * box.scrollHeight;
+    return 0;
+  };
+  const list = items.map(it => ({ it, d: fromEnd(it) })).sort((a, b) => b.d - a.d);
+
+  let next;
+  const at = list.findIndex(x => x.it.id === starStep.itemId);
+  if (at >= 0 && Math.abs(box.scrollTop - starStep.scrollTop) < 60) {
+    next = list[at + dir];
+  } else {
+    const top = box.scrollHeight - box.scrollTop; // the top of the screen, as distance from the end
+    next = dir > 0
+      ? list.find(x => x.d < top - 120)
+      : [...list].reverse().find(x => x.d > top + 20);
+  }
+  if (!next) return toast(dir > 0 ? 'No more starred answers below' : 'No more starred answers above', 1800);
+
+  starStep.itemId = next.it.id;
+  jumpTo(next.it).finally(() => { starStep.scrollTop = box.scrollTop; });
+}
+
 // Panel click: same chat → jump. Other chat → remember the jump, then open that chat.
 // Opening it through a link already on the page (the site's own chat list) switches chat
 // without reloading, so the panel stays open. No such link → normal page load.
@@ -1672,9 +1711,10 @@ if (acb.adapter) {
   });
   getTheme().then(theme => { acb.theme = theme; }, () => {});
 
-  // Alt+B arrives from background.js.
+  // Alt+B, Alt+↑ and Alt+↓ arrive from background.js.
   chrome.runtime.onMessage.addListener(msg => {
     if (msg && msg.type === 'toggle-panel') togglePanel();
+    if (msg && msg.type === 'star-step') stepStar(msg.dir);
   });
 
   // Window got smaller: keep a moved panel inside it.

@@ -70,14 +70,19 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
   }
 });
 
-// ---------- Alt+B ----------
+// ---------- Alt+B, Alt+↑, Alt+↓ ----------
 
-// Alt+B → tell the current tab to show/hide the panel. Tabs without our content
-// script (other sites) just don't answer, which is fine.
+// Alt+B → tell the current tab to show/hide the panel; Alt+↑ / Alt+↓ → jump to the previous /
+// next starred answer in its chat. Tabs without our content script (other sites) just don't
+// answer, which is fine.
 chrome.commands.onCommand.addListener(async command => {
-  if (command !== 'toggle-panel') return;
+  const msg = command === 'toggle-panel' ? { type: 'toggle-panel' }
+    : command === 'prev-star' ? { type: 'star-step', dir: -1 }
+    : command === 'next-star' ? { type: 'star-step', dir: 1 }
+    : null;
+  if (!msg) return;
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab) chrome.tabs.sendMessage(tab.id, { type: 'toggle-panel' }).catch(() => {});
+  if (tab) chrome.tabs.sendMessage(tab.id, msg).catch(() => {});
 });
 
 // ---------- Weekly backup ----------

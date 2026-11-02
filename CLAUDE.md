@@ -101,7 +101,7 @@ background.js loads common.js with `importScripts`. library.html loads it with a
   up step by step and retry. Give up after ~15 s (up to 45 s while a long chat is still loading older messages) and show a small "Couldn't find this message" note
 - Opening an item from another chat: save pendingJump, then open its URL. When the chat loads,
   content.js checks pendingJump (URL matches, under 60 s old), jumps to the message, then clears it
-- Alt+B is a Chrome `commands` shortcut in manifest.json, not a page key listener
+- Alt+B (and Alt+↑ / Alt+↓) are Chrome `commands` shortcuts in manifest.json, not page key listeners
 
 ## Don't
 - No frameworks, libraries, build step, or servers
@@ -167,6 +167,8 @@ In order. Not part of v1, don't build early.
    there), in search, Export .md and Copy as prompt. On Gemini the note starts a little left of the text
    (aligning it made it jump; the user accepted it)
 4. Scrollbar markers: gold ticks on the chat's scrollbar where starred answers are; click to jump
-5. Alt+↑ / Alt+↓: previous / next starred answer in this chat
+5. [x] Alt+↑ / Alt+↓: previous / next starred answer in this chat.
+   Done: Chrome commands prev-star / next-star (like Alt+B); counted from the last jump, or from the screen
+   after scrolling; "No more starred answers below/above" at the ends
 Maybe: save part of an answer (jump to that paragraph), compare AIs side by side,
 PDF / Notion / Google Docs export, tags. Skip: sync between computers, AI summaries (need servers / API keys).
