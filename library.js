@@ -926,8 +926,10 @@ async function removeProject() {
 let undoTimer = null;
 let undoAction = null;
 
+// action = null: just a note, no Undo button.
 function showUndo(text, action) {
   $('undo-text').textContent = text;
+  $('undo-btn').hidden = !action;
   $('undo').hidden = false;
   undoAction = action;
   clearTimeout(undoTimer);
@@ -973,6 +975,67 @@ $('undo-btn').addEventListener('click', async () => {
   if (action) await action();
 });
 
+// ---------- Backup ----------
+
+// One row in the sidebar, like "Dark mode": "Backup" and when the last one was saved. It opens
+// a menu: Back up now, Restore backup…, and the weekly backup switch (it runs in background.js).
+async function renderBackupStatus() {
+  const { backupAt, backupAuto } = await getBackupInfo();
+  const menu = dropMenu('Backup', 'Back up or restore your saved answers', [
+    { label: 'Back up now', hint: 'Saves a file to Downloads › AI Chat Bookmarks', value: 'now' },
+    { label: 'Restore backup…', hint: 'Adds the answers from a backup file', value: 'restore' },
+    {
+      label: 'Weekly backup',
+      note: backupAuto ? 'on' : 'off',
+      hint: backupAuto ? 'Click to stop the weekly backup' : 'Click to back up every week',
+      value: 'auto',
+      divider: true
+    }
+  ], async value => {
+    if (value === 'now') backUpNow();
+    else if (value === 'restore') $('restore-file').click();
+    else await setBackupAuto(!backupAuto); // the row redraws from the storage change
+  });
+  menu.wrap.classList.add('backup-menu');
+  const when = h('span', 'backup-when', backupAt ? timeAgo(backupAt) : 'never');
+  when.title = backupAuto ? 'Last backup (one every week)' : 'Last backup (weekly backup is off)';
+  menu.button.insertBefore(when, menu.button.lastChild);
+  $('backup').replaceChildren(menu.wrap);
+}
+
+async function backUpNow() {
+  showUndo('Backing up…', null);
+  const result = await chrome.runtime.sendMessage({ type: 'backup-now' })
+    .catch(err => ({ ok: false, error: err.message }));
+  if (result && result.ok) showUndo('Backup saved in Downloads › AI Chat Bookmarks.', null);
+  else if (result && result.error === 'Nothing saved yet') showUndo('Nothing to back up yet.', null);
+  else showUndo('Couldn’t save the backup.', null);
+}
+
+// Restore: pick a backup file; its answers are added to what's here (nothing is replaced).
+$('restore-file').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  let backup = null;
+  try {
+    backup = JSON.parse(await file.text());
+  } catch (err) {
+    backup = null;
+  }
+  if (!isBackup(backup)) return showUndo('That file isn’t an AI Chat Bookmarks backup.', null);
+  const added = await restoreBackup(backup);
+  const n = added.items.length;
+  const p = added.projects.length;
+  if (!n && !p && !added.trash.length) return showUndo('Everything in that backup is already here.', null);
+  const t = added.trash.length;
+  const parts = [];
+  if (n) parts.push(`${n} answer${n === 1 ? '' : 's'}`);
+  if (p) parts.push(`${p} project${p === 1 ? '' : 's'}`);
+  if (t) parts.push(`${t} item${t === 1 ? '' : 's'} in Recently deleted`);
+  showUndo(`Restored ${parts.join(', ').replace(/, ([^,]*)$/, ' and $1')}.`, () => undoRestore(added));
+});
+
 // Light or dark look: the "Dark mode" switch at the bottom of the sidebar. The page stays
 // hidden until the saved choice is applied (library.css), so it never flashes the other look.
 function applyTheme(theme) {
@@ -992,7 +1055,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
   if (changes.theme) applyTheme(changes.theme.newValue === 'dark' ? 'dark' : 'light');
   if (changes.items || changes.projects || changes.trash) render();
+  if (changes.backupAt || changes.backupAuto) renderBackupStatus();
 });
 
 getTheme().then(applyTheme, () => applyTheme('light'));
 render();
+renderBackupStatus();

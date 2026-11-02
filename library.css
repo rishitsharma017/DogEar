@@ -468,10 +468,57 @@ button.link:hover {
 }
 
 /* The "Dark mode" switch, under the projects */
+/* Backup: one row like "Dark mode" (Backup · when), opening a menu above it */
+.backup {
+  margin-top: 12px;
+}
+
+.backup-menu {
+  display: flex;
+  width: 100%;
+}
+
+/* Lined up with the Dark mode row: no border, and the arrow's own empty margin pulled in so
+   it ends on the same right edge as the switch. */
+.backup-menu .menu-btn {
+  width: 100%;
+  gap: 8px;
+  padding: 8px 10px;
+  border: none;
+  color: var(--side-muted);
+}
+
+.backup-menu .menu-btn svg {
+  margin-right: -3px;
+}
+
+.backup-menu .menu-btn > span:first-child {
+  flex: 1;
+  text-align: left;
+}
+
+.backup-menu .menu-btn:hover,
+.backup-menu .menu-btn[aria-expanded="true"] {
+  background-color: var(--side-raised);
+  color: var(--side-text);
+}
+
+.backup-when {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.backup-menu .menu {
+  left: 0;
+  right: 0;
+  max-width: none;
+}
+
+
 .theme-toggle {
   display: flex;
   width: 100%;
-  margin-top: 12px;
+  margin-top: 10px;
   padding: 8px 10px;
   justify-content: space-between;
   align-items: center;

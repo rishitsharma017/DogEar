@@ -281,6 +281,97 @@ function setTheme(theme) {
   return queued(() => chrome.storage.local.set({ theme: theme === 'dark' ? 'dark' : 'light' }));
 }
 
+// ---------- Backup ----------
+// A backup is one JSON file with every project, saved answer and Recently deleted entry.
+// background.js saves one to Downloads/AI Chat Bookmarks/ every week (and on "Back up now");
+// the Library's "Restore backup…" adds one back.
+
+const BACKUP_APP = 'ai-chat-bookmarks';
+
+async function makeBackup() {
+  const { projects, items, trash } = await getData();
+  return { app: BACKUP_APP, version: 1, savedAt: Date.now(), projects, items, trash };
+}
+
+function isBackup(data) {
+  return !!data && data.app === BACKUP_APP && Array.isArray(data.projects) && Array.isArray(data.items);
+}
+
+// When the last backup was saved, the backup files kept ([{ id }], download ids, oldest
+// first), and whether the weekly backup is on (it is unless the user switched it off).
+async function getBackupInfo() {
+  const { backupAt, backupFiles, backupAuto } =
+    await chrome.storage.local.get({ backupAt: null, backupFiles: [], backupAuto: true });
+  return { backupAt, backupFiles, backupAuto: backupAuto !== false };
+}
+
+function setBackupAuto(on) {
+  return queued(() => chrome.storage.local.set({ backupAuto: !!on }));
+}
+
+function setBackupInfo(backupAt, backupFiles) {
+  return queued(() => chrome.storage.local.set({ backupAt, backupFiles }));
+}
+
+// Adds a backup to what's saved now; nothing already here changes.
+// - A project with the same name (ignoring case) gets the backup's answers, no second copy.
+// - An answer already here (same id, or the same message of the same chat) is skipped.
+// - Recently deleted entries already here, or older than 30 days, are skipped.
+// Returns the ids it added ({ projects, items, trash }), for "Undo".
+function restoreBackup(backup) {
+  if (!isBackup(backup)) return Promise.reject(new Error('Not a backup'));
+  return update(data => {
+    const added = { projects: [], items: [], trash: [] };
+    const projectFor = new Map(); // backup project id → project id here
+    for (const p of backup.projects) {
+      if (!p || !p.id || !normalize(p.name)) continue;
+      const name = normalize(p.name);
+      const here = data.projects.find(q => q.id === p.id)
+        || data.projects.find(q => q.name.toLowerCase() === name.toLowerCase());
+      if (here) {
+        projectFor.set(p.id, here.id);
+      } else {
+        data.projects.push({ id: p.id, name, createdAt: p.createdAt || Date.now() });
+        projectFor.set(p.id, p.id);
+        added.projects.push(p.id);
+      }
+    }
+    const ids = new Set(data.items.map(it => it.id));
+    const messages = new Set(data.items.filter(it => it.msgId).map(it => it.convId + '|' + it.msgId));
+    for (const it of backup.items) {
+      if (!it || !it.id || ids.has(it.id)) continue;
+      if (it.msgId && messages.has(it.convId + '|' + it.msgId)) continue;
+      const projectId = projectFor.get(it.projectId)
+        || (data.projects.some(p => p.id === it.projectId) ? it.projectId : null);
+      if (!projectId) continue;
+      data.items.push({ ...it, projectId });
+      ids.add(it.id);
+      added.items.push(it.id);
+    }
+    const cutoff = Date.now() - TRASH_DAYS * 24 * 60 * 60 * 1000;
+    const inTrash = new Set(data.trash.map(t => t.id));
+    for (const t of backup.trash || []) {
+      if (!t || !t.id || inTrash.has(t.id) || !(t.deletedAt > cutoff)) continue;
+      data.trash.push(t);
+      added.trash.push(t.id);
+    }
+    return added;
+  });
+}
+
+// "Undo" after a restore: takes out exactly what it added (a project it added stays if
+// something was saved into it since).
+function undoRestore(added) {
+  return update(data => {
+    const projects = new Set(added.projects);
+    const items = new Set(added.items);
+    const trash = new Set(added.trash);
+    data.items = data.items.filter(it => !items.has(it.id));
+    data.projects = data.projects.filter(p => !projects.has(p.id) || data.items.some(it => it.projectId === p.id));
+    data.trash = data.trash.filter(t => !trash.has(t.id));
+  });
+}
+
 // ---------- Dates ----------
 
 // "just now", "5 min ago", "2 h ago", "Yesterday", "3 days ago", then "Oct 14" (with the year

@@ -34,7 +34,9 @@ Two use cases. Every decision should serve these:
 - adapters.js: ONLY place with site-specific selectors
 - content.js: stars, picker, panel, jump-to-message (no site-specific code)
 - common.js: all storage read/write + markdown export
-- background.js: toolbar icon, right-click menu, Alt+B command
+- background.js: toolbar icon, right-click menu, Alt+B command, weekly backup
+- offscreen.html / offscreen.js: hidden page that turns a backup into a file to download
+  (a background service worker can't make file links itself)
 - library.html / library.js / library.css
 - content.css: all classes prefixed `acb-` so they never clash with the sites
 - icons/: extension icons (16, 48, 128 px)
@@ -57,6 +59,9 @@ background.js loads common.js with `importScripts`. library.html loads it with a
   panelScroll = reopen the panel like this, scrolled to the same spot)
 - panelPos: { left, top } where the user dragged the Alt+B panel (null = default top-right)
 - theme: 'light' | 'dark', the look the user picked with the Library's "Dark mode" switch (default light)
+- backupAt, backupFiles: [{ id }], backupAuto: when the last backup was saved, the backup downloads kept
+  (newest 5, each its own file: Downloads/AI Chat Bookmarks/backup-<date>-<time>.json), and whether the
+  weekly backup is on (default on; the Library's Backup menu switches it)
 - Store the actual answer text, not just a link, so saved items survive chat deletion
 - text is simple markdown: code blocks, lists, headings, bold, links. Everything else becomes plain text
 - hash and prefix are made from the text with whitespace collapsed and trimmed
@@ -144,7 +149,10 @@ Build order. One step at a time; Claude is the first site.
 
 ## Later ideas (v2, only after step 15)
 In order. Not part of v1, don't build early.
-1. Backup / restore: download all data as one file, load it back (data only lives in Chrome)
+1. [x] Backup / restore: download all data as one file, load it back (data only lives in Chrome).
+   Done: weekly automatic backup (switchable) to Downloads/AI Chat Bookmarks, each backup its own file,
+   newest 5 kept; "Back up now"; Restore adds (never replaces, skips duplicates) with Undo.
+   All in the Library sidebar's Backup menu
 2. "Copy project as prompt": a project as one message to paste into any AI to continue the research
 3. Notes on a bookmark: short label shown in the panel instead of the first line
 4. Scrollbar markers: gold ticks on the chat's scrollbar where starred answers are; click to jump
