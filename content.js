@@ -437,7 +437,11 @@ function findFadingRow(btn, turn) {
 // Set once per star.
 function matchSiteButton(btn, bar) {
   if (!acb.adapter.starLike || btn.dataset.matched) return;
-  const like = bar.querySelector(acb.adapter.starLike);
+  // A real, full-size button only: until you hover, Claude puts a 1 px placeholder first in an
+  // older answer's row, and copying that made the ☆ 1 px wide (its icon then stuck out left).
+  // Nothing big enough yet: keep the default look and try again on the next scan.
+  const like = [...bar.querySelectorAll(acb.adapter.starLike)]
+    .find(b => !b.classList.contains('acb-ui') && b.offsetWidth >= 12);
   // The icon may be an SVG (ChatGPT) or an icon-font element (Gemini's <mat-icon>). Not just
   // anything with "icon" in its class: that can be an invisible hover circle around it.
   // With starIcon the adapter gives the size itself (Claude's icons can't be measured).
