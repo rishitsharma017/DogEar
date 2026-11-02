@@ -652,13 +652,40 @@ async function openPicker(btn, el, { focusNote = false } = {}) {
     box.style.left = `${left + (left - placed.left)}px`;
     box.style.top = `${top + (top - placed.top)}px`;
   }
+  // Something of the site's clips it or draws over it (Gemini's chat list paints over a menu
+  // inside a message; seen in the picker report): show it on the page itself instead.
+  if (hiddenByPage(box)) {
+    for (const el of raised) el.classList.remove('acb-raised');
+    raised.length = 0;
+    document.body.append(box);
+    box.style.top = `${top}px`;
+    box.style.left = `${left}px`;
+  }
 
   picker = { box, btn, raised, saveNote };
   btn.classList.add('acb-open');
   document.addEventListener('mousedown', onOutsideClick, true);
   document.addEventListener('keydown', onPickerKey, true);
   document.addEventListener('scroll', onPageScroll, true);
-  (focusNote ? note : input).focus();
+  // Without scrolling: Chrome otherwise scrolls the chat to "show" the box, and a scroll closes
+  // the menu (onPageScroll), so it vanished at once (seen in the picker report).
+  (focusNote ? note : input).focus({ preventScroll: true });
+}
+
+// Can the user really see and click el? Checks what is on top at its corners and middle
+// (only the points inside the window): anything of the site's there means it's clipped or
+// covered.
+function hiddenByPage(el) {
+  const r = el.getBoundingClientRect();
+  if (!r.width || !r.height) return true;
+  for (const x of [r.left + 12, r.left + r.width / 2, r.right - 12]) {
+    for (const y of [r.top + 8, r.top + r.height / 2, r.bottom - 8]) {
+      if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue;
+      const top = document.elementFromPoint(x, y);
+      if (!top || !el.contains(top)) return true;
+    }
+  }
+  return false;
 }
 
 // ---------- Jump to message ----------
