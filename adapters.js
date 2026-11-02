@@ -23,8 +23,9 @@ const ADAPTERS = [
     textSelectors: ['[data-cds="Prose"]', '[data-perf-reply-text]'],
     // ☆ copies Copy's colour and corners. Claude draws its icons in a way that can't be measured,
     // on a 16 px slot that they fill almost fully, so the star is drawn bigger. starOnHover:
-    // Claude only shows older answers' buttons on hover, so the ☆ does too.
-    starLike: 'button[aria-label="Copy"]',
+    // Claude only shows older answers' buttons on hover, so the ☆ does too. Copy is the first
+    // button in the row (its name changes with the site's language).
+    starLike: 'button[aria-label="Copy"], button:first-of-type',
     starIcon: { size: 19, stroke: 1.6 },
     starOnHover: true,
     // Hidden page text that is not part of the answer ("Claude responded: …" for screen readers).
@@ -63,17 +64,21 @@ const ADAPTERS = [
       '[data-content-search-unit-key$=":assistant"]',
       '[data-message-author-role="assistant"]'
     ],
-    // The row under an answer: Copy, Read aloud, Share, Regenerate, More. The row itself has
-    // no stable name, so find it by its buttons. Copy alone isn't enough: cards inside an
+    // The row under an answer: Copy, Rate, Read aloud, Share, Regenerate, More. It sits in a
+    // "turn-action-controls" box; questions have one too (Copy, Share, Edit), but only an
+    // answer's row has menu buttons (Rate, Regenerate, More). Button names change with the
+    // site's language, so they're only the backups. Copy alone isn't enough: cards inside an
     // answer (e.g. an "Email" draft) have their own Copy button. ("Copy message" = questions.)
     actionsSelectors: [
+      '.turn-action-controls > div:has(> button[aria-haspopup="menu"])',
       'div:has(> button[aria-label="Copy"]):has(> button[aria-label="Regenerate response"])',
       'div:has(> button[aria-label="Copy"]):has(> button[aria-label="Read aloud"])',
       'div:has(> button[aria-label="Copy"]):has(> button[aria-label="More actions"])'
     ],
-    // ☆ goes just before "More actions" (…), and copies the look of the Copy button.
-    starBefore: 'button[aria-label="More actions"]',
-    starLike: 'button[aria-label="Copy"]',
+    // ☆ goes just before "More actions" (…, always the last button), and copies the look of
+    // Copy (always the first).
+    starBefore: 'button[aria-label="More actions"], button[aria-haspopup="menu"]:last-of-type',
+    starLike: 'button[aria-label="Copy"], button:first-of-type',
     // After a jump, light up only the question's speech bubble (the row is the full chat width).
     highlightSelectors: ['[data-user-message-bubble]'],
     textSelectors: ['[data-markdown-text-style="assistant-message"]', '.markdown'],
@@ -148,9 +153,9 @@ const ADAPTERS = [
     // The left group under an answer: Copy, Share, Helpful / Not helpful, Fork, sources.
     actionsSelectors: ['[data-workflow-text-footer] > div:first-child'],
     // ☆ goes just before the sources button (the only button there without a label),
-    // and copies the look of Copy.
+    // and copies the look of Copy (the first button; its name changes with the site's language).
     starBefore: 'button:not([aria-label]):not(.acb-ui)',
-    starLike: 'button[aria-label="Copy"]',
+    starLike: 'button[aria-label="Copy"], button:first-of-type',
     // Perplexity's icons (Tabler) fill 12 of their 16 px with thin lines; a star looks smaller
     // than a square icon of the same width, so it's drawn a bit bigger with thinner lines.
     starIcon: { size: 18, stroke: 1.6 },
@@ -205,9 +210,11 @@ const ADAPTERS = [
       '[role="group"][aria-labelledby^="turn-heading-"] span:has(> button)',
       '[role="group"][aria-labelledby^="turn-heading-"]'
     ],
-    // ☆ goes just before "…" (More actions), and copies the look of Like.
+    // ☆ goes just before "…" (More actions), and copies the look of Like. Grok keeps these two
+    // names in English in other languages; if it ever translates them, any button has the same
+    // look, and the ☆ goes at the end of the row instead.
     starBefore: 'button[aria-label="More actions"]',
-    starLike: 'button[aria-label="Like"]',
+    starLike: 'button[aria-label="Like"], button',
     // Grok's icons fill 12–13 of their 16 px; a star looks smaller than other icons of the same
     // width, so it's drawn a bit bigger with thinner lines.
     starIcon: { size: 18, stroke: 1.6 },

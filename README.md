@@ -192,16 +192,14 @@ wait until an answer has finished writing.
   is updated. It fails quietly and never breaks the site.
 - Very old answers in huge chats can take several seconds to reach, mostly while the site
   itself loads older messages.
-- Some site settings recognise buttons by their English names, so the ☆ may look less built-in
-  when a site is shown in another language.
 
 ## Roadmap
 
 - [x] Stars, projects, panel and jumping on five AIs
 - [x] Library with search, sorting, index tabs and dark mode
 - [x] Notes, *Copy as prompt*, automatic backup, `Alt+↑` / `Alt+↓`
+- [x] Works when a site is shown in another language
 - [ ] Chrome Web Store release
-- [ ] Better support for sites shown in other languages
 - [ ] Maybe: save part of an answer, compare AIs side by side, tags
 
 ## License
