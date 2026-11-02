@@ -7,7 +7,7 @@ const acb = {
   saved: [],              // items saved from the current chat
   prints: new WeakMap(),  // message element → { hash, prefix } (only for finished answers)
   lastChange: 0,          // when the page last changed (performance.now()), see waitForQuiet
-  leaving: null,          // messages of the chat we're switching away from, see waitForQuiet
+  leaving: null,          // messages of the chat we're switching away from (box → msgId), see waitForQuiet
   theme: 'light'          // the look picked in the Library (light / dark), for the picker and panel
 };
 
@@ -999,6 +999,7 @@ async function seekFromEnd(box, item, token) {
   const cap = Date.now() + 45000;
   let height = -1;
   let grewAt = performance.now();
+  let nudgedAt = 0;
   while (Date.now() < cap) {
     if (token !== jumpToken) return null;
     const el = findMessage(item);
@@ -1014,7 +1015,16 @@ async function seekFromEnd(box, item, token) {
     } else if (performance.now() - grewAt > 2500) {
       return null; // nothing more loads: the sweeps take over from the top
     }
-    if (box.scrollTop > 0) box.scrollTop = 0;
+    // Claude only loads the next batch when the chat scrolls, and sitting still at the top
+    // isn't scrolling. Nothing new for 0.5 s: a small scroll down, and back up on the next
+    // frame, asks for it.
+    const now = performance.now();
+    if (box.scrollTop <= 0 && now - grewAt > 500 && now - nudgedAt > 500) {
+      box.scrollTop = 150;
+      nudgedAt = now;
+    } else if (box.scrollTop > 0) {
+      box.scrollTop = 0;
+    }
     await nextFrame();
   }
   return null;
@@ -1099,7 +1109,7 @@ async function openItem(item) {
   }
   const link = linkTo(item.url);
   if (link) {
-    acb.leaving = new Set(getMessages(acb.adapter).map(m => m.el));
+    acb.leaving = new Map(getMessages(acb.adapter).map(m => [m.el, m.msgId]));
     link.click();
   } else {
     location.assign(item.url);
@@ -1115,6 +1125,8 @@ function linkTo(url) {
 // Wait until the chat has stopped changing (just switched or loaded): 400 ms without
 // page changes, at least one message on the page, and none of the old chat's messages
 // left (sites change the URL first and swap the messages in later). 8 s at most.
+// An old message is the same box still holding the same message: ChatGPT reuses the old
+// chat's boxes for the new chat's messages, so the box alone isn't enough.
 // item: stop waiting as soon as its answer is on the page (some sites keep redrawing a
 // freshly opened chat for seconds, long after the answer is already there).
 async function waitForQuiet(item) {
@@ -1122,8 +1134,10 @@ async function waitForQuiet(item) {
   while (performance.now() < end) {
     await nextFrame();
     const messages = getMessages(acb.adapter);
-    const oldLeft = acb.leaving && messages.some(m => acb.leaving.has(m.el));
-    if (messages.length && !oldLeft && item && findMessage(item)) break;
+    const oldLeft = acb.leaving && messages.some(m => acb.leaving.has(m.el) && acb.leaving.get(m.el) === m.msgId);
+    // Found by its msgId: that id belongs to the new chat, so it's open, whatever of the
+    // old one is still around (ChatGPT once waited the full 8 s with the answer on screen).
+    if (messages.length && item && findMessage(item) && (item.msgId || !oldLeft)) break;
     if (performance.now() - acb.lastChange > 400 && messages.length && !oldLeft) break;
   }
   acb.leaving = null;
