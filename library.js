@@ -541,12 +541,13 @@ function itemCard(item, projects, projectName, selectable) {
   const body = h('div', 'body');
   card.append(meta, body);
 
-  // The user's note is the title, with the question under it in small text.
-  if (item.note) body.append(h('div', 'question note', item.note));
+  // The user's note: a small gold-edged label above the question, like the note under an answer
+  // in the chat (as the title it was mistaken for the question).
+  if (item.note) body.append(h('div', 'note-chip', item.note));
 
   // A long question is cut to 2 lines; clicking it shows all of it (and cuts it again).
   if (item.question) {
-    const question = h('div', item.note ? 'question asked' : 'question', item.question);
+    const question = h('div', 'question', item.question);
     body.append(question);
     requestAnimationFrame(() => {
       if (question.scrollHeight <= question.clientHeight + 2) return;
@@ -627,7 +628,7 @@ function itemCard(item, projects, projectName, selectable) {
   }
 
   body.append(actions);
-  if (state.search) highlight(card.querySelectorAll('.details, .question, .text'), state.search);
+  if (state.search) highlight(card.querySelectorAll('.details, .note-chip, .question, .text'), state.search);
   return card;
 }
 
@@ -733,12 +734,12 @@ function chevronIcon() {
   return svg;
 }
 
-// Swap the title for a text box to write the note. Enter or clicking away saves (empty = no
+// Swap the note label for a text box to write the note. Enter or clicking away saves (empty = no
 // note), Esc cancels. The page doesn't redraw while it's open (like renaming a project).
 function editNote(item, body) {
   if (renaming) return;
   renaming = true;
-  const old = body.querySelector('.question.note');
+  const old = body.querySelector('.note-chip');
   const input = h('input', 'note-box');
   input.value = item.note || '';
   input.maxLength = 120;

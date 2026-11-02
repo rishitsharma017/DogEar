@@ -66,6 +66,9 @@ background.js loads common.js with `importScripts`. library.html loads it with a
   weekly backup is on (default on; the Library's Backup menu switches it)
 - Store the actual answer text, not just a link, so saved items survive chat deletion
 - text is simple markdown: code blocks, lists, headings, bold, links. Everything else becomes plain text
+  Formulas (KaTeX: Grok, Gemini, ChatGPT…) are written out from their MathML copy as readable text:
+  x = (−b ± √(b^2 − 4ac))/(2a), [a b; c d], 50°, Å. A formula with no MathML copy (Gemini tables) keeps
+  its drawn text (a ≠ drawn as = with a slash comes out as =)
 - hash and prefix are made from the text with whitespace collapsed and trimmed
 - Right-click saves may have empty question, convId and msgId
 - Use the `unlimitedStorage` permission (the default 10 MB fills up)

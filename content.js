@@ -52,6 +52,16 @@ function mdChildren(node) {
 
 function mdNode(node) {
   if (node.nodeType === Node.TEXT_NODE) return node.nodeValue.replace(/\s+/g, ' ');
+  // A formula drawn by KaTeX (Grok, Gemini): both its copies are skipped below (the drawn one is
+  // marked hidden from screen readers, the other is screen-reader only), so it's written out
+  // here from its MathML copy as readable text. A formula on its own line stays on its own line.
+  if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('katex')) {
+    // No MathML copy (Gemini's formulas in tables): the drawn copy's text instead.
+    const math = node.querySelector('math');
+    const drawn = node.querySelector('.katex-html');
+    const text = math ? mathText(math) : normalize(drawn ? drawn.textContent : '');
+    if (text) return node.closest('.katex-display') ? `\n\n${text}\n\n` : text;
+  }
   if (node.nodeType !== Node.ELEMENT_NODE || node.matches(SKIP)) return '';
   const tag = node.tagName.toLowerCase();
   const inner = () => mdChildren(node).trim();
@@ -98,6 +108,87 @@ function mdNode(node) {
   }
 }
 
+// A MathML formula as readable text: λ = (2.52 nm ⋅ K^(1/2))/(T^(1/2)). Fractions a/b, powers
+// a^b, subscripts a_b, roots √(a), matrices [a b; c d]; anything longer than one name or
+// number gets brackets. Braces and accents drawn over or under a part are left out.
+function mathText(math) {
+  return mathPart(math)
+    .replace(/\s+/g, ' ')
+    .replace(/\( /g, '(')
+    .replace(/ \)/g, ')')
+    // A sign that starts something is part of it: −b, (−b, = −b (not "− b").
+    .replace(/(^|[([=<>≤≥≈≠,] ?) ?([−+±]) /g, '$1$2')
+    .trim();
+}
+
+function mathPart(node) {
+  if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
+  if (node.nodeType !== Node.ELEMENT_NODE) return '';
+  const tag = node.tagName.toLowerCase();
+  const kids = [...node.children];
+  const all = () => [...node.childNodes].map(mathPart).join('');
+  const wrap = n => {
+    const t = n ? mathPart(n).replace(/\s+/g, ' ').trim() : '';
+    return /^(\p{N}+(\.\p{N}+)?|.)$/u.test(t) ? t : `(${t})`; // a number or one letter: no brackets
+  };
+  switch (tag) {
+    case 'annotation': case 'annotation-xml':
+      return ''; // the LaTeX source
+    case 'mfrac': // a space after it: 1/2 mv^2, not 1/2mv^2
+      return `${wrap(kids[0])}/${wrap(kids[1])} `;
+    case 'msup': {
+      // Degrees and primes are written as they are: 50°, f′ (not 50^∘).
+      const sup = kids[1] ? kids[1].textContent.trim() : '';
+      if (/^[∘°]$/.test(sup)) return `${mathPart(kids[0]).trim()}°`;
+      if (/^[′″‴]+$/.test(sup)) return `${mathPart(kids[0]).trim()}${sup}`;
+      return `${wrap(kids[0])}^${wrap(kids[1])}`;
+    }
+    case 'mi': {
+      // A function name (sin, log, max) stands apart: 2d sin θ, not 2dsinθ.
+      const t = node.textContent.trim();
+      return t.length > 1 ? ` ${t} ` : t;
+    }
+    case 'msub':
+      return `${wrap(kids[0])}_${wrap(kids[1])}`;
+    case 'msubsup':
+      return `${wrap(kids[0])}_${wrap(kids[1])}^${wrap(kids[2])}`;
+    case 'msqrt':
+      return `√(${all().trim()})`;
+    case 'mroot':
+      return `${wrap(kids[1])}√(${kids[0] ? mathPart(kids[0]).trim() : ''})`;
+    case 'mo': {
+      // Relations and operators get spaces around them; brackets and commas don't.
+      const t = node.textContent.trim();
+      if (t === ',') return ', ';
+      if (/^[⁡-⁤]$/.test(t)) return ''; // invisible "function of", "times", …
+      return /^[=<>≤≥≈≠→←↔⇒⇔⟹⟸⟺⟶∝≡+×⋅·−±∓∈∉⊂⊆∪∩∧∨]$/.test(t) ? ` ${t} ` : t;
+    }
+    case 'mspace':
+      return ' ';
+    case 'mtable': // rows split by "; ": [a b; c d]
+      return kids.map(row => mathPart(row).replace(/\s+/g, ' ').trim()).join('; ');
+    case 'mtr':
+      return kids.map(cell => mathPart(cell).trim()).join(' ');
+    case 'munder': case 'mover': case 'munderover': {
+      // A brace or accent (x̂, an underbrace ⏟) is drawn, not read: just the part itself. A label
+      // under such a brace is left out too. Limits (∑ from i=1 to n) become _ and ^.
+      const mark = n => n && /^[⏟⏞︸︷‾¯_^~ˆ˜˙¨→←⃗]$/.test(n.textContent.trim());
+      const braced = n => n && /^(munder|mover)$/i.test(n.tagName) && mark(n.children[1]);
+      // A ring on top (Å for ångström): the letter with its ring.
+      if (tag === 'mover' && kids[1] && /^[˚°∘]$/.test(kids[1].textContent.trim())) {
+        return (mathPart(kids[0]).trim() + '̊').normalize('NFC');
+      }
+      if (braced(kids[0])) return mathPart(kids[0]);
+      if (mark(kids[1]) && (tag !== 'munderover' || mark(kids[2]))) return mathPart(kids[0]);
+      if (tag === 'munder') return `${wrap(kids[0])}_${wrap(kids[1])} `;
+      if (tag === 'mover') return `${wrap(kids[0])}^${wrap(kids[1])} `;
+      return `${wrap(kids[0])}_${wrap(kids[1])}^${wrap(kids[2])} `;
+    }
+    default:
+      return all();
+  }
+}
+
 function mdList(list, ordered) {
   let n = ordered ? (list.start || 1) : 0;
   const lines = [];
@@ -112,7 +203,8 @@ function mdList(list, ordered) {
 
 function mdTable(table) {
   const rows = [...table.querySelectorAll('tr')]
-    .map(tr => [...tr.children].map(cell => normalize(cell.textContent).replace(/\|/g, '\\|')));
+    // Each cell through the same conversion as the rest (so formulas in cells are read right).
+    .map(tr => [...tr.children].map(cell => normalize(mdChildren(cell)).replace(/\|/g, '\\|')));
   if (!rows.length) return '';
   const line = cells => `| ${cells.join(' | ')} |`;
   return [line(rows[0]), line(rows[0].map(() => '---')), ...rows.slice(1).map(line)].join('\n');
@@ -1458,14 +1550,11 @@ function panelRow(item, where) {
   meta.append(ai, document.createTextNode(` · ${[where, timeAgo(item.createdAt)].filter(Boolean).join(' · ')}`));
   meta.title = new Date(item.createdAt).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' });
   row.append(meta);
-  // The user's note is the title (the question goes under it); else the question, then the answer.
-  if (item.note) {
-    row.append(h('div', 'acb-panel-q', item.note));
-    row.append(h('div', 'acb-panel-text', item.question || snippet(item.text)));
-  } else {
-    if (item.question) row.append(h('div', 'acb-panel-q', item.question));
-    row.append(h('div', 'acb-panel-text', snippet(item.text)));
-  }
+  // The user's note: a small gold-edged label (like under the answer in the chat), then the
+  // question as the title and the answer.
+  if (item.note) row.append(h('div', 'acb-panel-note', item.note));
+  if (item.question) row.append(h('div', 'acb-panel-q', item.question));
+  row.append(h('div', 'acb-panel-text', snippet(item.text)));
   row.title = item.convId === acb.convId ? 'Jump to this answer' : 'Open the chat and jump to this answer';
   row.addEventListener('click', () => openItem(item));
   return row;

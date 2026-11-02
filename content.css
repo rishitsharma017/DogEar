@@ -564,6 +564,19 @@
   font-size: 13px;
 }
 
+/* The user's note on a row: a small gold-edged label */
+.acb-panel-note {
+  width: fit-content;
+  max-width: 100%;
+  margin: 2px 0 4px;
+  padding: 1px 8px;
+  border-left: 3px solid var(--acb-gilt);
+  border-radius: 0 4px 4px 0;
+  background: var(--acb-gilt-soft);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
 .acb-panel-empty {
   padding: 18px 14px;
   color: var(--acb-muted);
