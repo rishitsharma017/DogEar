@@ -569,20 +569,9 @@ function itemCard(item, projects, projectName, selectable) {
   // Move and Delete only show while the card is hovered or has keyboard focus (item-tools).
   const tools = h('div', 'item-tools');
 
-  const move = h('select', 'move quiet');
-  move.title = 'Move to another project';
-  fillProjectMenu(move, projects, 'Move to…');
-  const here = [...move.options].find(o => o.value === item.projectId);
-  if (here) {
-    here.disabled = true;
-    here.textContent += ' (here)';
-  }
-  move.value = '';
-  move.addEventListener('change', async () => {
-    const projectId = await pickedProject(move.value);
-    move.value = '';
-    if (projectId && projectId !== item.projectId) moveItem(item.id, projectId);
-  });
+  const move = moveMenu(projects, 'Move to…', 'Move to another project', async projectId => {
+    if (projectId !== item.projectId) moveItem(item.id, projectId);
+  }, item.projectId);
 
   const del = h('button', 'quiet danger', 'Delete');
   del.title = 'Delete this saved answer (you can undo)';
@@ -590,7 +579,7 @@ function itemCard(item, projects, projectName, selectable) {
     const entry = await deleteItem(item.id);
     if (entry) showUndo('Moved to Recently deleted.', () => restoreFromTrash(entry.id));
   });
-  tools.append(move, del);
+  tools.append(move.wrap, del);
   actions.append(tools);
 
   actions.append(copyMenu(item));
@@ -608,73 +597,94 @@ function itemCard(item, projects, projectName, selectable) {
   return card;
 }
 
-// Copy button with a small menu of our own: plain text (for anywhere) or Markdown (keeps code
-// blocks, lists, links). Closes on a pick, Esc, or a click anywhere else.
+// Copy: plain text (for anywhere) or Markdown (keeps code blocks, lists, links).
 function copyMenu(item) {
-  const wrap = h('span', 'copy-wrap');
-  const button = h('button', 'quiet copy-btn');
-  const label = h('span', '', 'Copy');
+  const menu = dropMenu('Copy', 'Copy the answer text', [
+    { label: 'Plain text', hint: 'No formatting marks', value: 'text' },
+    { label: 'Markdown', hint: 'Keeps code, lists and links', value: 'md' }
+  ], async how => {
+    try {
+      await navigator.clipboard.writeText(how === 'md' ? item.text : plainText(item.text));
+      menu.label.textContent = 'Copied ✓';
+    } catch (e) {
+      menu.label.textContent = 'Couldn’t copy';
+    }
+    setTimeout(() => { menu.label.textContent = 'Copy'; }, 1500);
+  });
+  return menu.wrap;
+}
+
+// A quiet button that opens a small menu of our own (Chrome's own dropdowns can't take the
+// Library's look). choices: [{ label, value, hint?, note?, disabled?, divider?, className? }];
+// onPick(value) runs after the menu closes. Closes on a pick, Esc or a click anywhere else;
+// ↑/↓ move between choices. Opens upwards when there's no room below.
+function dropMenu(text, title, choices, onPick) {
+  const wrap = h('span', 'menu-wrap');
+  const button = h('button', 'quiet menu-btn');
+  button.type = 'button';
+  const label = h('span', '', text);
   button.append(label, chevronIcon());
-  button.title = 'Copy the answer text';
+  button.title = title;
   button.setAttribute('aria-haspopup', 'menu');
   button.setAttribute('aria-expanded', 'false');
 
-  const menu = h('div', 'copy-menu');
+  const menu = h('div', 'menu');
   menu.setAttribute('role', 'menu');
   menu.hidden = true;
-  const choice = (name, hint, how) => {
-    const b = h('button', 'copy-choice');
+  for (const c of choices) {
+    if (c.divider) menu.append(h('div', 'menu-divider'));
+    const b = h('button', 'menu-choice' + (c.className ? ' ' + c.className : ''));
+    b.type = 'button';
     b.setAttribute('role', 'menuitem');
-    b.append(h('span', 'copy-name', name), h('span', 'copy-hint', hint));
-    b.addEventListener('click', async () => {
+    b.disabled = !!c.disabled;
+    const name = h('span', 'menu-name', c.label);
+    if (c.note) name.append(h('span', 'menu-note', c.note));
+    b.append(name);
+    if (c.hint) b.append(h('span', 'menu-hint', c.hint));
+    b.addEventListener('click', () => {
       close();
       button.focus();
-      try {
-        await navigator.clipboard.writeText(how === 'md' ? item.text : plainText(item.text));
-        label.textContent = 'Copied ✓';
-      } catch (e) {
-        label.textContent = 'Couldn’t copy';
-      }
-      setTimeout(() => { label.textContent = 'Copy'; }, 1500);
+      onPick(c.value);
     });
-    return b;
-  };
-  menu.append(
-    choice('Plain text', 'No formatting marks', 'text'),
-    choice('Markdown', 'Keeps code, lists and links', 'md')
-  );
+    menu.append(b);
+  }
 
   const close = () => {
     menu.hidden = true;
+    menu.classList.remove('up');
     button.setAttribute('aria-expanded', 'false');
     document.removeEventListener('click', outside, true);
   };
   const outside = e => {
     if (!wrap.contains(e.target)) close();
   };
+  const enabled = () => [...menu.querySelectorAll('.menu-choice:not(:disabled)')];
   button.addEventListener('click', () => {
     if (!menu.hidden) return close();
     menu.hidden = false;
+    const room = innerHeight - button.getBoundingClientRect().bottom;
+    menu.classList.toggle('up', room < menu.offsetHeight + 12);
     button.setAttribute('aria-expanded', 'true');
     document.addEventListener('click', outside, true);
-    menu.querySelector('button').focus();
+    enabled()[0]?.focus();
   });
   wrap.addEventListener('keydown', e => {
     if (menu.hidden) return;
-    const choices = [...menu.querySelectorAll('button')];
-    const at = choices.indexOf(document.activeElement);
+    const list = enabled();
+    const at = list.indexOf(document.activeElement);
     if (e.key === 'Escape') {
+      e.preventDefault();
       close();
       button.focus();
     } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       const step = e.key === 'ArrowDown' ? 1 : -1;
-      choices[(at + step + choices.length) % choices.length].focus();
+      list[(at + step + list.length) % list.length].focus();
     }
   });
 
   wrap.append(button, menu);
-  return wrap;
+  return { wrap, button, label };
 }
 
 // A small down arrow for the Copy button (built with DOM calls).
@@ -734,14 +744,21 @@ function plainText(md) {
 
 const NEW_PROJECT = '__new__';
 
-// Projects A–Z, then "+ New project…". placeholder = a first, non-project line.
-function fillProjectMenu(select, projects, placeholder) {
+// A Move menu: projects A–Z (the one it's in now shown but not pickable), then
+// "+ New project…". onPick gets the chosen project's id (a new one is made first).
+function moveMenu(projects, text, title, onPick, currentId) {
   const sorted = [...projects].sort((a, b) => a.name.localeCompare(b.name));
-  select.replaceChildren(
-    ...(placeholder ? [new Option(placeholder, '')] : []),
-    ...sorted.map(p => new Option(p.name, p.id)),
-    new Option('+ New project…', NEW_PROJECT)
-  );
+  const choices = sorted.map(p => ({
+    label: p.name,
+    value: p.id,
+    disabled: p.id === currentId,
+    note: p.id === currentId ? 'here' : ''
+  }));
+  choices.push({ label: '+ New project…', value: NEW_PROJECT, divider: true, className: 'menu-new' });
+  return dropMenu(text, title, choices, async value => {
+    const projectId = await pickedProject(value);
+    if (projectId) onPick(projectId);
+  });
 }
 
 // The project chosen in a move menu: an existing one, or a new one named by the user.
@@ -763,12 +780,17 @@ function renderSelectionBar(projects) {
   $('selection-bar').hidden = !state.selecting;
   $('select-mode').hidden = state.selecting;
   $('selected-count').textContent = n ? `${n} selected` : 'Tick the answers to move or delete';
-  $('bulk-move').disabled = $('bulk-delete').disabled = !n;
+  if (projects) {
+    const move = moveMenu(projects, 'Move to…', 'Move the selected answers', moveSelected);
+    $('bulk-move').replaceChildren(move.wrap);
+  }
+  const moveBtn = $('bulk-move').querySelector('.menu-btn');
+  if (moveBtn) moveBtn.disabled = !n;
+  $('bulk-delete').disabled = !n;
   const all = $('select-all');
   all.checked = n > 0 && n === state.shownIds.length;
   all.indeterminate = n > 0 && n < state.shownIds.length;
   all.title = all.checked ? 'Unselect all' : `Select all ${state.shownIds.length}`;
-  if (projects) fillProjectMenu($('bulk-move'), projects, 'Move to…');
 }
 
 function startSelecting() {
@@ -781,11 +803,7 @@ function stopSelecting() {
   state.selected.clear();
 }
 
-async function moveSelected() {
-  const select = $('bulk-move');
-  const projectId = await pickedProject(select.value);
-  select.value = '';
-  if (!projectId) return;
+async function moveSelected(projectId) {
   const ids = [...state.selected];
   state.selected.clear();
   await moveItems(ids, projectId);
@@ -921,7 +939,6 @@ $('rename').addEventListener('click', startRename);
 $('export').addEventListener('click', exportProject);
 $('delete').addEventListener('click', removeProject);
 $('select-all').addEventListener('change', e => setAllSelected(e.target.checked));
-$('bulk-move').addEventListener('change', moveSelected);
 $('bulk-delete').addEventListener('click', deleteSelected);
 $('bulk-done').addEventListener('click', () => {
   stopSelecting();
