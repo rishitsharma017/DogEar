@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="DogEar demo: a final-year project on home batteries. Claude's comparison is starred with a note, Alt+B jumps back to an older answer, ChatGPT's sizing maths goes into the same project, and the Library shows each AI's best answers (Perplexity with sources, Gemini's paper summary), then search and Copy as prompt" width="100%">
+  <img src="docs/demo.gif" alt="DogEar demo: a final-year project on home batteries. Claude's comparison is starred with a note, Alt+B jumps back to an older answer, ChatGPT's sizing maths goes into the same project, and the Library, sorted by AI, shows all five (Perplexity with sources, Gemini's paper summary, Grok on what people say), then search and Copy as prompt" width="100%">
   <br>
   <sub>One research project, each AI for what it does best: Claude to explain, ChatGPT for the maths, Perplexity for sources, all in one Library.</sub>
 </p>
