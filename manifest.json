@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "DogEar – Bookmarks and research projects for AI chats",
   "short_name": "DogEar",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Capture the answers that matter in ChatGPT, Claude, Gemini, Perplexity and Grok, then find, organise and build on them.",
   "permissions": ["storage", "unlimitedStorage", "contextMenus", "activeTab", "scripting", "downloads", "alarms", "offscreen"],
   "background": {
