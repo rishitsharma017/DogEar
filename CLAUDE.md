@@ -48,7 +48,9 @@ background.js loads common.js with `importScripts`. library.html loads it with a
 
 ## Data (chrome.storage.local)
 - projects: [{ id, name, createdAt }]
-- items: [{ id, projectId, ai, text, question, chatTitle, url, convId, msgId, pos, fromEnd, hash, prefix, createdAt }]
+- items: [{ id, projectId, ai, text, question, chatTitle, url, convId, msgId, pos, fromEnd, hash, prefix, createdAt, note? }]
+  (note = a short note the user wrote, up to 120 characters: shown under the answer in the chat, and
+   instead of the question in the panel and Library. A note on an unsaved answer saves it into "Notes")
   (pos = where the answer sat in the chat when saved, 0 = top … 1 = bottom; a hint so the jump starts near it.
    fromEnd = px from the answer to the end of the chat: the main hint, because sites load older
    messages at the top, which changes pos but not fromEnd. Old items learn both after a jump)
@@ -156,7 +158,11 @@ In order. Not part of v1, don't build early.
 2. [x] "Copy project as prompt": a project as one message to paste into any AI to continue the research.
    Done: "Copy as prompt" button in a project's header (projectPrompt in common.js): a short brief, then every
    answer oldest first with AI, chat, date and question; the note shows the length (warns past 30,000 words)
-3. Notes on a bookmark: short label shown in the panel instead of the first line
+3. [x] Notes on a bookmark: short label shown in the panel instead of the first line.
+   Done: note box in the ☆/★ menu (on an unsaved answer it saves the answer into "Notes"), shown under the
+   answer in the chat (click to edit), in the ★ tooltip, as the title in the panel and Library ("Note" button
+   there), in search, Export .md and Copy as prompt. On Gemini the note starts a little left of the text
+   (aligning it made it jump; the user accepted it)
 4. Scrollbar markers: gold ticks on the chat's scrollbar where starred answers are; click to jump
 5. Alt+↑ / Alt+↓: previous / next starred answer in this chat
 Maybe: save part of an answer (jump to that paragraph), compare AIs side by side,

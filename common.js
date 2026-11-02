@@ -89,6 +89,13 @@ function ensureInbox() {
   return addProject(INBOX_NAME);
 }
 
+// Notes holds answers the user wrote a note on without picking a project. Found by its name.
+const NOTES_NAME = 'Notes';
+
+function ensureNotes() {
+  return addProject(NOTES_NAME);
+}
+
 function isInbox(project) {
   return !!project && project.name.toLowerCase() === INBOX_NAME.toLowerCase();
 }
@@ -158,7 +165,7 @@ function emptyTrash() {
   });
 }
 
-// fields: { projectId, ai, text, plain?, question, chatTitle, url, convId, msgId, pos?, fromEnd? }
+// fields: { projectId, ai, text, plain?, question, chatTitle, url, convId, msgId, pos?, fromEnd?, note? }
 // pos = where the answer sat in the chat (0 = top, 1 = bottom), a hint for jumping back.
 // fromEnd = px from the answer to the end of the chat: the better hint, since sites load
 // older messages at the top and that changes pos but not fromEnd.
@@ -180,6 +187,7 @@ function addItem(fields, { remember = true } = {}) {
       msgId: fields.msgId || '',
       pos: typeof fields.pos === 'number' ? fields.pos : null,
       fromEnd: typeof fields.fromEnd === 'number' ? fields.fromEnd : null,
+      note: normalize(fields.note).slice(0, 120),
       hash: hashText(source),
       prefix: makePrefix(source),
       createdAt: Date.now()
@@ -208,6 +216,16 @@ function setItemHints(itemId, pos, fromEnd) {
     if (!item) return;
     item.pos = pos;
     item.fromEnd = fromEnd;
+  });
+}
+
+// A short label the user gives a saved answer, shown instead of its question ('' removes it).
+function setItemNote(itemId, note) {
+  note = normalize(note).slice(0, 120);
+  return update(data => {
+    const item = data.items.find(it => it.id === itemId);
+    if (item) item.note = note;
+    return item || null;
   });
 }
 
@@ -415,6 +433,7 @@ async function exportProjectMarkdown(projectId) {
     lines.push('---', '');
     lines.push(`## ${it.chatTitle || it.ai || 'Saved item'}`, '');
     const meta = [`**AI:** ${it.ai || 'unknown'}`, `**Saved:** ${day(it.createdAt)}`];
+    if (it.note) meta.unshift(`**Note:** ${it.note}`);
     if (it.url) meta.push(`[Open chat](${it.url})`);
     lines.push(meta.join(' · '), '');
     if (it.question) {
@@ -448,6 +467,7 @@ async function projectPrompt(projectId) {
   list.forEach((it, i) => {
     const where = [it.ai || 'Web clip', it.chatTitle && `"${it.chatTitle}"`, day(it.createdAt)].filter(Boolean);
     lines.push(`--- ${i + 1}. ${where.join(' · ')} ---`);
+    if (it.note) lines.push(`My note: ${it.note}`);
     if (it.question) lines.push(`Question: ${it.question}`);
     lines.push(it.question ? 'Answer:' : 'Text:', it.text, '');
   });

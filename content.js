@@ -247,14 +247,46 @@ function starIcon() {
 // Only touch the button when something changed, otherwise our own edit would
 // trigger the MutationObserver again and scan forever.
 function renderStar(btn, item) {
+  // Its tooltip (our tooltip reads aria-label): a saved answer's note, if it has one.
+  const note = item && item.note;
+  const label = item ? (note ? (note.length > 60 ? note.slice(0, 59) + '…' : note) : 'Edit bookmark') : 'Bookmark';
+  if (btn.getAttribute('aria-label') !== label) btn.setAttribute('aria-label', label);
   const state = item ? 'saved' : 'empty';
   if (btn.dataset.state === state) return;
   btn.dataset.state = state;
   if (!btn.firstChild) btn.append(starIcon());
   // No title: that would show the browser's own tooltip on top of ours.
   btn.removeAttribute('title');
-  btn.setAttribute('aria-label', item ? 'Edit bookmark' : 'Bookmark');
   btn.classList.toggle('acb-saved', !!item);
+}
+
+// A saved answer's note, shown at the end of the answer so it's seen while scrolling.
+// Clicking it opens the ★ menu at the note box. No note → nothing (an old one is removed).
+// Our page text is skipped when the answer's text is read (SKIP), so it never changes the hash.
+// It goes inside the answer's text part (adapter textSelectors), as its last line, so it has the
+// text's width (Gemini sets it on the text part, not on the boxes around it). Its font is ours,
+// the same on every site.
+function renderNote(el, item, btn) {
+  let chip = el.querySelector('.acb-note');
+  const note = item && item.note;
+  if (!note) {
+    if (chip) chip.remove();
+    return;
+  }
+  if (!chip) {
+    chip = h('div', 'acb-ui acb-note');
+    chip.title = 'Your note (click to edit)';
+    chip.addEventListener('click', e => {
+      e.stopPropagation();
+      openPicker(chip.acbBtn, el, { focusNote: true });
+    });
+  }
+  chip.acbBtn = btn;
+  if (chip.textContent !== note) chip.textContent = note;
+  // Only moved when it isn't in place already, so it doesn't start the page watcher again.
+  const parts = getTextParts(acb.adapter, el);
+  const text = parts[parts.length - 1];
+  if (text.lastElementChild !== chip) text.append(chip);
 }
 
 // Put the star right after the site's last button in its button row, or at the end of
@@ -377,7 +409,9 @@ function scan() {
       }
       btn.acbMsg = msg.el;
       placeStar(btn, msg.el);
-      renderStar(btn, savedItemFor(msg.el));
+      const item = savedItemFor(msg.el);
+      renderStar(btn, item);
+      renderNote(msg.el, item, btn);
       latest = btn;
     }
     // Sites show the buttons on the latest answer all the time (older ones on hover), so
@@ -409,6 +443,7 @@ let picker = null; // { box, btn } while open
 
 function closePicker() {
   if (!picker) return;
+  if (picker.saveNote) picker.saveNote();
   picker.box.remove();
   picker.btn.classList.remove('acb-open');
   for (const el of picker.raised || []) el.classList.remove('acb-raised');
@@ -430,7 +465,9 @@ function onPageScroll(e) {
   if (picker && !picker.box.contains(e.target)) closePicker();
 }
 
-async function saveMessage(el, projectId) {
+// note: the user's note to save with it. options: addItem's (remember: make it the last-used
+// project; saves into "Notes" don't).
+async function saveMessage(el, projectId, note = '', options) {
   await addItem({
     projectId,
     ai: acb.adapter.name,
@@ -442,8 +479,9 @@ async function saveMessage(el, projectId) {
     convId: acb.convId,
     msgId: msgIdOf(el),
     pos: positionOf(el),
-    fromEnd: fromEndOf(el)
-  });
+    fromEnd: fromEndOf(el),
+    note
+  }, options);
 }
 
 // Where an element sits in its scrolling chat: 0 = top, 1 = bottom.
@@ -468,7 +506,8 @@ function offsetIn(el, box) {
 }
 
 // ☆ → pick a project to save into. ★ → move to another project, or remove.
-async function openPicker(btn, el) {
+// focusNote: start in the note box (clicking a note under an answer).
+async function openPicker(btn, el, { focusNote = false } = {}) {
   if (picker && picker.btn === btn) return closePicker();
   closePicker();
 
@@ -489,12 +528,41 @@ async function openPicker(btn, el) {
   input.type = 'text';
   input.placeholder = item ? 'Move to new project…' : 'New project name…';
   const list = h('div', 'acb-picker-list');
-  box.append(title, input, list);
+  // A saved answer: a note box first (a short label shown in the panel, the Library and this
+  // ★'s tooltip). Saved when the menu closes, or on Enter.
+  // The note box (shown under the answer, in the panel and the Library). Saved when the menu
+  // closes, or on Enter. On an answer that isn't saved yet: a note and Enter (or clicking
+  // away) saves it into "Notes" with that note; a note and a project saves it there.
+  const note = h('input', 'acb-picker-input acb-picker-note');
+  note.type = 'text';
+  note.placeholder = 'Add a note…';
+  note.maxLength = 120;
+  note.value = (item && item.note) || '';
+  note.title = item
+    ? 'A short note on this answer, shown under it, in the panel and the Library'
+    : 'Type a note and press Enter: this answer is saved in "Notes" with it';
+  note.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    closePicker();
+  });
+  let picked = false; // a project was picked: the note goes there with the answer
+  const saveNote = () => {
+    const text = normalize(note.value);
+    if (item) {
+      if (text !== (item.note || '')) setItemNote(item.id, text);
+    } else if (text && !picked) {
+      ensureNotes().then(p => saveMessage(el, p.id, text, { remember: false }));
+    }
+  };
+  box.append(title, note, input, list);
 
   const choose = async project => {
+    picked = true;
+    const text = normalize(note.value);
     closePicker();
     if (item) await moveItem(item.id, project.id);
-    else await saveMessage(el, project.id);
+    else await saveMessage(el, project.id, text);
   };
 
   let shown = [];
@@ -585,12 +653,12 @@ async function openPicker(btn, el) {
     box.style.top = `${top + (top - placed.top)}px`;
   }
 
-  picker = { box, btn, raised };
+  picker = { box, btn, raised, saveNote };
   btn.classList.add('acb-open');
   document.addEventListener('mousedown', onOutsideClick, true);
   document.addEventListener('keydown', onPickerKey, true);
   document.addEventListener('scroll', onPageScroll, true);
-  input.focus();
+  (focusNote ? note : input).focus();
 }
 
 // ---------- Jump to message ----------
@@ -1363,8 +1431,14 @@ function panelRow(item, where) {
   meta.append(ai, document.createTextNode(` · ${[where, timeAgo(item.createdAt)].filter(Boolean).join(' · ')}`));
   meta.title = new Date(item.createdAt).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' });
   row.append(meta);
-  if (item.question) row.append(h('div', 'acb-panel-q', item.question));
-  row.append(h('div', 'acb-panel-text', snippet(item.text)));
+  // The user's note is the title (the question goes under it); else the question, then the answer.
+  if (item.note) {
+    row.append(h('div', 'acb-panel-q', item.note));
+    row.append(h('div', 'acb-panel-text', item.question || snippet(item.text)));
+  } else {
+    if (item.question) row.append(h('div', 'acb-panel-q', item.question));
+    row.append(h('div', 'acb-panel-text', snippet(item.text)));
+  }
   row.title = item.convId === acb.convId ? 'Jump to this answer' : 'Open the chat and jump to this answer';
   row.addEventListener('click', () => openItem(item));
   return row;

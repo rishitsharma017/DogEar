@@ -788,6 +788,31 @@ mark.hit {
   overflow: hidden;
 }
 
+/* Under a note: the question it answered, small and quiet */
+.question.asked {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* Writing a note: the box sits where the title goes */
+.note-box {
+  width: 100%;
+  padding: 3px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--raised);
+  font-size: 16px;
+  font-weight: 620;
+}
+
+.note-box::placeholder {
+  color: var(--muted);
+  font-weight: 400;
+}
+
 /* A question cut to 2 lines: click it to see all of it */
 .question.long {
   cursor: pointer;

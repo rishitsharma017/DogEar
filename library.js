@@ -360,7 +360,7 @@ function emptyText(total, filtered) {
 
 function matches(item, search) {
   if (!search) return true;
-  const hay = `${item.question}\n${item.text}\n${item.chatTitle}`.toLowerCase();
+  const hay = `${item.note || ''}\n${item.question}\n${item.text}\n${item.chatTitle}`.toLowerCase();
   return search.toLowerCase().split(/\s+/).filter(Boolean).every(word => hay.includes(word));
 }
 
@@ -541,9 +541,12 @@ function itemCard(item, projects, projectName, selectable) {
   const body = h('div', 'body');
   card.append(meta, body);
 
+  // The user's note is the title, with the question under it in small text.
+  if (item.note) body.append(h('div', 'question note', item.note));
+
   // A long question is cut to 2 lines; clicking it shows all of it (and cuts it again).
   if (item.question) {
-    const question = h('div', 'question', item.question);
+    const question = h('div', item.note ? 'question asked' : 'question', item.question);
     body.append(question);
     requestAnimationFrame(() => {
       if (question.scrollHeight <= question.clientHeight + 2) return;
@@ -606,7 +609,11 @@ function itemCard(item, projects, projectName, selectable) {
     const entry = await deleteItem(item.id);
     if (entry) showUndo('Moved to Recently deleted.', () => restoreFromTrash(entry.id));
   });
-  tools.append(move.wrap, del);
+  const noteBtn = h('button', 'quiet', item.note ? 'Edit note' : 'Note');
+  noteBtn.title = 'A short label for this answer, shown instead of its question';
+  noteBtn.addEventListener('click', () => editNote(item, body));
+
+  tools.append(noteBtn, move.wrap, del);
   actions.append(tools);
 
   actions.append(copyMenu(item));
@@ -724,6 +731,39 @@ function chevronIcon() {
   path.setAttribute('d', 'M4.5 6.5L8 10l3.5-3.5');
   svg.append(path);
   return svg;
+}
+
+// Swap the title for a text box to write the note. Enter or clicking away saves (empty = no
+// note), Esc cancels. The page doesn't redraw while it's open (like renaming a project).
+function editNote(item, body) {
+  if (renaming) return;
+  renaming = true;
+  const old = body.querySelector('.question.note');
+  const input = h('input', 'note-box');
+  input.value = item.note || '';
+  input.maxLength = 120;
+  input.placeholder = 'A short note, e.g. “SQL join example”';
+  if (old) old.replaceWith(input);
+  else body.prepend(input);
+  input.focus();
+  input.select();
+
+  let done = false;
+  const finish = async save => {
+    if (done) return;
+    done = true;
+    renaming = false;
+    if (save && normalize(input.value) !== (item.note || '')) {
+      await setItemNote(item.id, input.value); // storage change redraws the page
+    } else {
+      render();
+    }
+  };
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') finish(true);
+    if (e.key === 'Escape') finish(false);
+  });
+  input.addEventListener('blur', () => finish(true));
 }
 
 // Marks every searched word inside these elements' text (DOM calls only, no innerHTML).
