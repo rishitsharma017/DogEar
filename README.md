@@ -4,7 +4,7 @@ A Chrome extension for bookmarking answers in AI chats. Star an answer, then jum
 back to it later, even in a chat with hundreds of messages. Saved answers go into project
 folders, so one research topic can collect answers from several AIs.
 
-> **Work in progress.** It currently works on **Claude (claude.ai)**, **ChatGPT (chatgpt.com)**,
+> It works on **Claude (claude.ai)**, **ChatGPT (chatgpt.com)**,
 > **Gemini (gemini.google.com)**, **Perplexity (perplexity.ai)** and **Grok (grok.com)**.
 
 ## What works now (Claude, ChatGPT, Gemini, Perplexity and Grok)
@@ -25,7 +25,8 @@ folders, so one research topic can collect answers from several AIs.
 
 ## Planned
 
-- A final check on every supported site
+- Backup and restore (download all saved data as one file, load it back)
+- "Copy project as prompt", notes on a bookmark, and more
 
 ## Install (developer mode)
 

@@ -135,12 +135,12 @@ Build order. One step at a time; Claude is the first site.
       - Done: "+ New project" button in the sidebar
       - Done: sort menu (newest / oldest / by AI / by chat), search matches highlighted, "/" focuses search,
         click a long question to see all of it, Copy menu (plain text or Markdown)
-- [ ] 15. Final check on every site, fix what fails (no new features). Not yet confirmed by the user:
-      ☆ tooltip matches each site's own; Gemini saved text (no "You said", readable maths); Gemini bubble
-      glow after a jump; ☆ only after a new answer finishes (Gemini); ChatGPT "Email" card text when saved;
-      the spinner ring turning; tooltips/colours in light mode (measured in dark mode only);
-      Perplexity: ☆ only after a new answer finishes (not tested: free question limit was used up);
-      Grok: ☆ only after a new answer finishes (isBusy guessed: answer writing was never recorded)
+- [x] 15. Final check on every site, fix what fails (no new features). All confirmed by the user
+      (2026-11-02), including ~70 logged test jumps across all five sites. Fixed: Claude loads older
+      messages only while the chat scrolls (small scroll while waiting); ChatGPT reuses old message
+      boxes (old = same box + same msgId); jump starts once the answer is on the page by msgId.
+      Known: ChatGPT takes ~3.5 s to open a chat, and very long ChatGPT/Gemini chats load older
+      messages slowly (the sites themselves, same with the extension off)
 
 ## Later ideas (v2, only after step 15)
 In order. Not part of v1, don't build early.
