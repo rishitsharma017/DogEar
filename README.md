@@ -3,6 +3,7 @@
 </p>
 
 <p align="center">
+  <a href="https://chromewebstore.google.com/detail/hmnaddjjpiemgmdjgmcdhgaggiiaibnb"><img alt="Get it on the Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-Add%20to%20Chrome-c99a2e?style=flat-square&logo=googlechrome&logoColor=white"></a>
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-c99a2e?style=flat-square&logo=googlechrome&logoColor=white">
   <img alt="Plain JavaScript" src="https://img.shields.io/badge/plain%20JavaScript-no%20dependencies-2f2d29?style=flat-square&logo=javascript&logoColor=f7df1e">
   <img alt="Privacy" src="https://img.shields.io/badge/data-stays%20in%20your%20browser-8a1f1f?style=flat-square">
@@ -13,6 +14,8 @@
   <img src="docs/demo.gif" alt="DogEar demo: a final-year project on home batteries. Claude's comparison is starred with a note, Alt+B jumps back to an older answer, ChatGPT's sizing maths goes into the same project, and the Library, sorted by AI, shows all five (Perplexity with sources, Gemini's paper summary, Grok on what people say), then search and Copy as prompt" width="100%">
   <br>
   <sub>One research project, each AI for what it does best: Claude to explain, ChatGPT for the maths, Perplexity for sources, all in one Library.</sub>
+  <br>
+  <sub><a href="https://www.youtube.com/watch?v=xKkEEgoeyUw">▶ Watch it with sound on YouTube</a></sub>
 </p>
 
 ---
@@ -99,15 +102,20 @@ You can change these at `chrome://extensions/shortcuts`.
 
 ## Install
 
-The extension isn't in the Chrome Web Store yet. To try it now:
+**[Add DogEar to Chrome](https://chromewebstore.google.com/detail/hmnaddjjpiemgmdjgmcdhgaggiiaibnb)**
+from the Chrome Web Store. It's free and updates itself. It also works in Edge, Brave and other
+Chromium browsers.
+
+Then open a chat on [ChatGPT](https://chatgpt.com), [Claude](https://claude.ai),
+[Gemini](https://gemini.google.com), [Perplexity](https://www.perplexity.ai) or
+[Grok](https://grok.com) and look for the ☆ next to the buttons under an answer.
+
+**From source** (to try changes or contribute):
 
 1. Download this repo (**Code → Download ZIP**) and unzip it, or `git clone` it.
 2. Open `chrome://extensions` in Chrome.
 3. Turn on **Developer mode** (top right).
 4. Click **Load unpacked** and choose the folder.
-5. Open a chat on [ChatGPT](https://chatgpt.com), [Claude](https://claude.ai),
-   [Gemini](https://gemini.google.com), [Perplexity](https://www.perplexity.ai) or
-   [Grok](https://grok.com) and look for the ☆ next to the buttons under an answer.
 
 ## How it works
 
@@ -200,7 +208,7 @@ wait until an answer has finished writing.
 - [x] Library with search, sorting, index tabs and dark mode
 - [x] Notes, *Copy as prompt*, automatic backup, `Alt+↑` / `Alt+↓`
 - [x] Works when a site is shown in another language
-- [ ] Chrome Web Store release
+- [x] [Chrome Web Store](https://chromewebstore.google.com/detail/hmnaddjjpiemgmdjgmcdhgaggiiaibnb) release
 - [ ] Maybe: save part of an answer, compare AIs side by side, tags
 
 ## Privacy
