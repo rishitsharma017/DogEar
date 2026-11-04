@@ -217,7 +217,12 @@ A new site is mostly one adapter in `adapters.js`:
 ```
 
 Optional settings let the ☆ copy a specific button's look, place it before a given button, or
-wait until an answer has finished writing.
+wait until an answer has finished writing. The site's address also goes in `manifest.json`
+(`content_scripts` → `matches`).
+
+**Want to help?** [CONTRIBUTING.md](CONTRIBUTING.md) walks through adding a site step by step,
+with a test checklist. Not a coder? [Request a site](https://github.com/rishitsharma017/DogEar/issues/new?template=new-site.yml) or
+[report a bug](https://github.com/rishitsharma017/DogEar/issues/new?template=bug.yml).
 
 ## Known limits
 

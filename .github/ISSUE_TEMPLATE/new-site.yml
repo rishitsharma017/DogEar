@@ -1,0 +1,38 @@
+name: Request a new AI site
+description: Ask for DogEar to work on another AI chat
+title: "Site request: "
+labels: ["site request"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks! Tell us which AI chat you'd like DogEar to work on.
+  - type: input
+    id: url
+    attributes:
+      label: Website link
+      placeholder: https://chat.example.com
+    validations:
+      required: true
+  - type: dropdown
+    id: account
+    attributes:
+      label: Can anyone use it?
+      options:
+        - Free, no account needed
+        - Free account needed
+        - Paid only
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Anything else?
+      description: How you use it, or anything that makes it different from other AI chats.
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Want to help?
+      options:
+        - label: I can test it when it's ready
+        - label: I'd like to try adding it myself (see CONTRIBUTING.md)

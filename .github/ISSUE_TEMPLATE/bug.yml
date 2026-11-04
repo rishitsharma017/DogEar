@@ -1,0 +1,37 @@
+name: Report a bug
+description: Something doesn't work, or the ☆ disappeared on a site
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: site
+    attributes:
+      label: Where did it happen?
+      options:
+        - ChatGPT
+        - Claude
+        - Gemini
+        - Perplexity
+        - Grok
+        - The Library page
+        - Right-click save on another website
+        - Somewhere else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. A screenshot helps a lot.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: Chrome, Edge, Brave…
+  - type: input
+    id: version
+    attributes:
+      label: DogEar version
+      description: In chrome://extensions, the number next to DogEar's name.
+      placeholder: 1.0.0
