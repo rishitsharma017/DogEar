@@ -89,6 +89,30 @@ Claude, Gemini, Perplexity and Grok side by side.
   **Restore backup…** merges one back without creating duplicates.
 - **Right-click → “Save selection”** on any web page saves the text into your *Inbox*.
 
+### Backup and restore
+
+Your answers live only in this browser. Uninstalling DogEar or resetting Chrome deletes them,
+so keep a backup file.
+
+**Back up**
+
+- DogEar saves a backup once a week on its own, to `Downloads › DogEar`. Each one is a separate
+  `.json` file, and the newest 5 are kept.
+- To save one right now: open the Library (click the DogEar icon) → **Backup** in the sidebar →
+  **Back up now**.
+- To stop the weekly backup, click **Weekly backup** in the same menu. The sidebar shows when
+  the last backup was saved.
+
+**Restore** (new computer, new browser, or after reinstalling)
+
+1. Copy a backup file from `Downloads › DogEar` to the new computer (USB, Drive, email).
+2. Install DogEar there and open the Library.
+3. **Backup** → **Restore backup…** → choose the file.
+
+Restore only **adds**: nothing you already have is replaced, and answers you already have are
+skipped, so restoring the same file twice is harmless. An *Undo* bar appears straight
+after, in case you picked the wrong file.
+
 ## Shortcuts
 
 | Shortcut | What it does |
