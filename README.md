@@ -122,7 +122,8 @@ after, in case you picked the wrong file.
 | `/` | Search the Library |
 | `Esc` | Close a menu or cancel a search for a message |
 
-You can change these at `chrome://extensions/shortcuts`.
+On a Mac, use `Option` instead of `Alt`. You can change the `Alt` shortcuts at
+`chrome://extensions/shortcuts`.
 
 ## Install
 
