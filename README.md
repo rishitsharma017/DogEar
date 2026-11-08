@@ -144,6 +144,9 @@ Then open a chat on [ChatGPT](https://chatgpt.com), [Claude](https://claude.ai),
 
 ## How it works
 
+The full story of the hardest part, finding a saved answer again in chats that remove and lazy-load
+messages, is in **[How I made "jump to message" work in ChatGPT, Claude and Gemini](https://dev.to/rishit_sharma_4bb94fecd6f/how-i-made-jump-to-message-work-in-chatgpt-claude-and-gemini-2po7)** on dev.to.
+
 ```mermaid
 flowchart LR
   subgraph site["AI chat page"]
